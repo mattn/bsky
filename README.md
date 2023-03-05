@@ -41,6 +41,15 @@ $ bsky login [handle] [password]
 $ bsky timeline
 ```
 
+```
+$ bsky post 'I love 🍕'
+```
+
+```
+$ bsky vote at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
+$ bsky repost at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
+```
+
 ## Installation
 
 Download binary from Release page.
