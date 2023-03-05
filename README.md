@@ -36,6 +36,11 @@ GLOBAL OPTIONS:
    --help, -h  show help
 ```
 
+```
+$ bsky login [handle] [password]
+$ bsky timeline
+```
+
 ## Installation
 
 Download binary from Release page.
