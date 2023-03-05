@@ -42,7 +42,7 @@ $ bsky timeline
 ```
 
 ```
-$ bsky post 'I love 🍕'
+$ bsky post -image ~/pizza.jpg 'I love 🍕'
 ```
 
 ```
