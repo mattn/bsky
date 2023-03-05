@@ -1,3 +1,5 @@
+github.com/bluesky-social/indigo v0.0.0-20230302230925-2c9a93bb5f46 h1:UTSSy2Td4rZTL5NG9+vfFib4RqKuCbP0iVJGcki7qic=
+github.com/bluesky-social/indigo v0.0.0-20230302230925-2c9a93bb5f46/go.mod h1:zobzqdsy93O/QOf2I7CSPyLKWU78gubAWHZbz22FOrA=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
