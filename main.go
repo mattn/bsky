@@ -22,6 +22,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const name = "bsky"
+
+const version = "0.0.1"
+
+var revision = "HEAD"
+
 type Config struct {
 	Host     string `json:"host"`
 	Handle   string `json:"handle"`
