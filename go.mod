@@ -56,4 +56,4 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-replace github.com/bluesky-social/indigo => /home/mattn/dev/indigo
+//replace github.com/bluesky-social/indigo => /home/mattn/dev/indigo
