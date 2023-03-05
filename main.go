@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -135,6 +136,9 @@ func doLogin(cCtx *cli.Context) error {
 	cfg.Host = cCtx.String("host")
 	cfg.Handle = cCtx.Args().Get(0)
 	cfg.Password = cCtx.Args().Get(1)
+	if cfg.Handle == "" || cfg.Password == "" {
+		return errors.New("handle and pasword are required")
+	}
 	b, err := json.MarshalIndent(&cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("cannot make config file: %w", err)
