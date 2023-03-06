@@ -560,7 +560,12 @@ func doShowProfile(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, xrpcc.Auth.Handle)
+	arg := cCtx.Args().First()
+	if arg == "" {
+		arg = xrpcc.Auth.Handle
+	}
+
+	profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
 	if err != nil {
 		return fmt.Errorf("cannot get profile: %w", err)
 	}
