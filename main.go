@@ -313,7 +313,7 @@ func doVotes(cCtx *cli.Context) error {
 		fmt.Print(v.Actor.Handle)
 		color.Set(color.Reset)
 		fmt.Printf(" [%s]", stringp(v.Actor.DisplayName))
-		fmt.Printf(" (%s)\n", v.CreatedAt)
+		fmt.Printf(" (%v)\n", ltime(v.CreatedAt))
 	}
 
 	return nil
@@ -405,6 +405,76 @@ func doReposts(cCtx *cli.Context) error {
 	return nil
 }
 
+func doFollows(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	arg := cCtx.String("handle")
+	if arg == "" {
+		arg = xrpcc.Auth.Handle
+	}
+
+	follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, "", 99, arg)
+	if err != nil {
+		return fmt.Errorf("getting record: %w", err)
+	}
+
+	if cCtx.Bool("json") {
+		for _, f := range follows.Follows {
+			json.NewEncoder(os.Stdout).Encode(f)
+		}
+		return nil
+	}
+
+	for _, f := range follows.Follows {
+		color.Set(color.FgHiRed)
+		fmt.Print(f.Handle)
+		color.Set(color.Reset)
+		fmt.Printf(" [%s] ", stringp(f.DisplayName))
+		color.Set(color.FgBlue)
+		fmt.Println(f.Did)
+		color.Set(color.Reset)
+	}
+	return nil
+}
+
+func doFollowers(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	arg := cCtx.String("handle")
+	if arg == "" {
+		arg = xrpcc.Auth.Handle
+	}
+
+	follows, err := bsky.GraphGetFollowers(context.TODO(), xrpcc, "", 99, arg)
+	if err != nil {
+		return fmt.Errorf("getting record: %w", err)
+	}
+
+	if cCtx.Bool("json") {
+		for _, f := range follows.Followers {
+			json.NewEncoder(os.Stdout).Encode(f)
+		}
+		return nil
+	}
+
+	for _, f := range follows.Followers {
+		color.Set(color.FgHiRed)
+		fmt.Print(f.Handle)
+		color.Set(color.Reset)
+		fmt.Printf(" [%s] ", stringp(f.DisplayName))
+		color.Set(color.FgBlue)
+		fmt.Println(f.Did)
+		color.Set(color.Reset)
+	}
+	return nil
+}
+
 func doDelete(cCtx *cli.Context) error {
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
@@ -488,7 +558,7 @@ func printPost(p *bsky.FeedPost_View) {
 	fmt.Print(p.Author.Handle)
 	color.Set(color.Reset)
 	fmt.Printf(" [%s]", stringp(p.Author.DisplayName))
-	fmt.Printf(" (%s)\n", rec.CreatedAt)
+	fmt.Printf(" (%v)\n", ltime(rec.CreatedAt))
 	fmt.Println(rec.Text)
 	if rec.Entities != nil {
 		for _, e := range rec.Entities {
@@ -547,6 +617,14 @@ func doThread(cCtx *cli.Context) error {
 	return nil
 }
 
+func ltime(s string) time.Time {
+	t, err := time.Parse("2006-01-02T15:04:05.000Z", s)
+	if err != nil {
+		return time.Now()
+	}
+	return t
+}
+
 func stringp(s *string) string {
 	if s == nil {
 		return ""
@@ -560,7 +638,7 @@ func doShowProfile(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	arg := cCtx.Args().First()
+	arg := cCtx.String("handle")
 	if arg == "" {
 		arg = xrpcc.Auth.Handle
 	}
@@ -720,6 +798,27 @@ func main() {
 				UsageText: "bsky reposts [uri]",
 				HelpName:  "reposts",
 				Action:    doReposts,
+			},
+			//{
+			//	Name:      "follow",
+			//	Usage:     "follow the handle",
+			//	UsageText: "bsky follow [handle]",
+			//	HelpName:  "follow",
+			//	Action:    doFollow,
+			//},
+			{
+				Name:      "follows",
+				Usage:     "show follows",
+				UsageText: "bsky follows",
+				HelpName:  "follows",
+				Action:    doFollows,
+			},
+			{
+				Name:      "followers",
+				Usage:     "show followers",
+				UsageText: "bsky followres",
+				HelpName:  "followers",
+				Action:    doFollowers,
 			},
 			{
 				Name:      "delete",
