@@ -39,6 +39,7 @@ func main() {
 				UsageText:   "bsky show-profile",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
 				Action: doShowProfile,
 			},

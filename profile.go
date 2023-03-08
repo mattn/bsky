@@ -34,6 +34,11 @@ func doShowProfile(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot get profile: %w", err)
 	}
 
+	if cCtx.Bool("json") {
+		json.NewEncoder(os.Stdout).Encode(profile)
+		return nil
+	}
+
 	fmt.Printf("Did: %s\n", profile.Did)
 	fmt.Printf("Handle: %s\n", profile.Handle)
 	fmt.Printf("DisplayName: %s\n", stringp(profile.DisplayName))
