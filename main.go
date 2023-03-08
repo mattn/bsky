@@ -722,7 +722,7 @@ func main() {
 				Usage:     "show profile",
 				UsageText: "bsky show-profile",
 				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "handle", Value: "", Usage: "user handle"},
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 				},
 				Action: doShowProfile,
 			},
