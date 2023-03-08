@@ -13,7 +13,7 @@ const version = "0.0.8"
 
 var revision = "HEAD"
 
-type Config struct {
+type config struct {
 	Host     string `json:"host"`
 	Handle   string `json:"handle"`
 	Password string `json:"password"`

@@ -100,7 +100,7 @@ func stringp(s *string) string {
 }
 
 func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
-	cfg := cCtx.App.Metadata["config"].(*Config)
+	cfg := cCtx.App.Metadata["config"].(*config)
 
 	xrpcc := &xrpc.Client{
 		Client: cliutil.NewHttpClient(),

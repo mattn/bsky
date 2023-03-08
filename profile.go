@@ -228,7 +228,7 @@ func doFollowers(cCtx *cli.Context) error {
 
 func doLogin(cCtx *cli.Context) error {
 	fp, _ := cCtx.App.Metadata["path"].(string)
-	var cfg Config
+	var cfg config
 	cfg.Host = cCtx.String("host")
 	cfg.Handle = cCtx.Args().Get(0)
 	cfg.Password = cCtx.Args().Get(1)

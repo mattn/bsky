@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func loadConfig(profile string) (*Config, string, error) {
+func loadConfig(profile string) (*config, string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return nil, "", err
@@ -38,7 +38,7 @@ func loadConfig(profile string) (*Config, string, error) {
 	if err != nil {
 		return nil, fp, fmt.Errorf("cannot load config file: %w", err)
 	}
-	var cfg Config
+	var cfg config
 	err = json.Unmarshal(b, &cfg)
 	if err != nil {
 		return nil, fp, fmt.Errorf("cannot load config file: %w", err)
