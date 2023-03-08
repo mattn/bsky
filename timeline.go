@@ -8,15 +8,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
 	"github.com/bluesky-social/indigo/api/bsky"
+	"github.com/bluesky-social/indigo/events"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/fatih/color"
 
+	"github.com/gorilla/websocket"
 	"github.com/urfave/cli/v2"
 )
 
@@ -463,6 +467,58 @@ func doReposts(cCtx *cli.Context) error {
 		color.Set(color.Reset)
 		fmt.Printf(" [%s]\n", stringp(r.DisplayName))
 	}
+
+	return nil
+}
+
+func doStream(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT)
+
+	go func() {
+		<-ch
+		cancel()
+	}()
+
+	d := websocket.DefaultDialer
+	con, _, err := d.Dial(cCtx.Args().First(), http.Header{})
+	if err != nil {
+		return fmt.Errorf("dial failure: %w", err)
+	}
+
+	defer func() {
+		_ = con.Close()
+	}()
+
+	err = events.HandleRepoStream(ctx, con, &events.RepoStreamCallbacks{
+		Append: func(evt *events.RepoAppend) error {
+			if cCtx.Bool("json") {
+				json.NewEncoder(os.Stdout).Encode(evt)
+			} else {
+				fmt.Printf("(%d) RepoAppend: %s (%s -> %s)\n", evt.Seq, evt.Repo, stringp(evt.Prev), evt.Commit)
+			}
+
+			return nil
+		},
+		Info: func(info *events.InfoFrame) error {
+			if cCtx.Bool("json") {
+				json.NewEncoder(os.Stdout).Encode(info)
+			} else {
+				fmt.Printf("INFO: %s: %s\n", info.Info, info.Message)
+			}
+
+			return nil
+		},
+		Error: func(errf *events.ErrorFrame) error {
+			return fmt.Errorf("error frame: %s: %s", errf.Error, errf.Message)
+		},
+	})
 
 	return nil
 }

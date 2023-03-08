@@ -68,6 +68,17 @@ func main() {
 				Action: doTimeline,
 			},
 			{
+				Name:        "stream",
+				Description: "Show timeline as stream",
+				Usage:       "Show timeline as stream",
+				UsageText:   "bsky stream",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				Action: doStream,
+			},
+			{
 				Name:        "thread",
 				Description: "Show thread",
 				Usage:       "Show thread",
