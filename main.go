@@ -34,8 +34,8 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:        "show-profile",
-				Description: "show profile",
-				Usage:       "show profile",
+				Description: "Show profile",
+				Usage:       "Show profile",
 				UsageText:   "bsky show-profile",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
@@ -44,8 +44,8 @@ func main() {
 			},
 			{
 				Name:        "update-profile",
-				Description: "update profile",
-				Usage:       "update profile",
+				Description: "Update profile",
+				Usage:       "Update profile",
 				UsageText:   "bsky update-profile",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "avatar", Value: "", Usage: "avatar image", TakesFile: true},
@@ -55,8 +55,8 @@ func main() {
 			},
 			{
 				Name:        "timeline",
-				Description: "show timeline",
-				Usage:       "show timeline",
+				Description: "Show timeline",
+				Usage:       "Show timeline",
 				UsageText:   "bsky timeline",
 				Aliases:     []string{"tl"},
 				Flags: []cli.Flag{
@@ -68,8 +68,8 @@ func main() {
 			},
 			{
 				Name:        "thread",
-				Description: "show thread",
-				Usage:       "show thread",
+				Description: "Show thread",
+				Usage:       "Show thread",
 				UsageText:   "bsky thread [uri]",
 				Flags: []cli.Flag{
 					&cli.IntFlag{Name: "n", Value: 30, Usage: "number of items"},
@@ -79,8 +79,8 @@ func main() {
 			},
 			{
 				Name:        "post",
-				Description: "post new text",
-				Usage:       "post new text",
+				Description: "Post new text",
+				Usage:       "Post new text",
 				UsageText:   "bsky post [text]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "r"},
@@ -93,16 +93,16 @@ func main() {
 			},
 			{
 				Name:        "vote",
-				Description: "vote the post",
-				Usage:       "vote the post",
+				Description: "Vote the post",
+				Usage:       "Vote the post",
 				UsageText:   "bsky vote [uri]",
 				HelpName:    "vote",
 				Action:      doVote,
 			},
 			{
 				Name:        "votes",
-				Description: "show votes of the post",
-				Usage:       "show votes of the post",
+				Description: "Show votes of the post",
+				Usage:       "Show votes of the post",
 				UsageText:   "bsky votes [uri]",
 				HelpName:    "votes",
 				Action:      doVotes,
@@ -110,32 +110,32 @@ func main() {
 			},
 			{
 				Name:        "repost",
-				Description: "repost the post",
-				Usage:       "repost the post",
+				Description: "Repost the post",
+				Usage:       "Repost the post",
 				UsageText:   "bsky repost [uri]",
 				HelpName:    "repost",
 				Action:      doRepost,
 			},
 			{
 				Name:        "reposts",
-				Description: "show reposts of the post",
-				Usage:       "show reposts of the post",
+				Description: "Show reposts of the post",
+				Usage:       "Show reposts of the post",
 				UsageText:   "bsky reposts [uri]",
 				HelpName:    "reposts",
 				Action:      doReposts,
 			},
 			{
 				Name:        "follow",
-				Description: "follow the handle",
-				Usage:       "follow the handle",
+				Description: "Follow the handle",
+				Usage:       "Follow the handle",
 				UsageText:   "bsky follow [handle]",
 				HelpName:    "follow",
 				Action:      doFollow,
 			},
 			{
 				Name:        "follows",
-				Description: "show follows",
-				Usage:       "show follows",
+				Description: "Show follows",
+				Usage:       "Show follows",
 				UsageText:   "bsky follows",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
@@ -145,8 +145,8 @@ func main() {
 			},
 			{
 				Name:        "followers",
-				Description: "show followers",
-				Usage:       "show followers",
+				Description: "Show followers",
+				Usage:       "Show followers",
 				UsageText:   "bsky followres",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
@@ -156,16 +156,17 @@ func main() {
 			},
 			{
 				Name:        "delete",
-				Description: "delete the note",
-				Usage:       "delete the note",
+				Description: "Delete the note",
+				Usage:       "Delete the note",
 				UsageText:   "bsky delete [cid]",
 				HelpName:    "delete",
 				Action:      doDelete,
 			},
 			{
-				Name:      "login",
-				Usage:     "login the social",
-				UsageText: "bsky login [handle] [password]",
+				Name:        "login",
+				Description: "Login the social",
+				Usage:       "Login the social",
+				UsageText:   "bsky login [handle] [password]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "host", Value: "https://bsky.social"},
 				},
