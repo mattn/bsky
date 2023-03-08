@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
@@ -24,11 +25,38 @@ func printPost(p *bsky.FeedPost_View, parent string) {
 	color.Set(color.Reset)
 	fmt.Printf(" [%s]", stringp(p.Author.DisplayName))
 	fmt.Printf(" (%v)\n", ltime(rec.CreatedAt))
-	fmt.Println(rec.Text)
 	if rec.Entities != nil {
+		sort.Slice(rec.Entities, func(i, j int) bool {
+			return rec.Entities[i].Index.Start < rec.Entities[j].Index.Start
+		})
+		rs := []rune(rec.Text)
+		off := int64(0)
+		for _, e := range rec.Entities {
+			if e.Index.Start < 0 {
+				e.Index.Start = 0
+			}
+			if e.Index.End > int64(len(rs)) {
+				e.Index.End = int64(len(rs))
+			}
+			fmt.Print(string(rs[off:e.Index.Start]))
+			if e.Type == "mention" {
+				color.Set(color.Bold)
+			} else {
+				color.Set(color.Underline)
+			}
+			fmt.Print(string(rs[e.Index.Start:e.Index.End]))
+			color.Set(color.Reset)
+			off = e.Index.End
+		}
+		if off < int64(len(rs)) {
+			fmt.Print(string(rs[off:]))
+		}
+		fmt.Println()
 		for _, e := range rec.Entities {
 			fmt.Printf(" {%s}\n", e.Value)
 		}
+	} else {
+		fmt.Println(rec.Text)
 	}
 	if rec.Embed != nil {
 		if p.Embed.EmbedImages_Presented != nil {
