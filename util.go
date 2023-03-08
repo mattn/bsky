@@ -58,7 +58,7 @@ func printPost(p *bsky.FeedPost_View) {
 	} else {
 		fmt.Println(rec.Text)
 	}
-	if rec.Embed != nil {
+	if p.Embed != nil {
 		if p.Embed.EmbedImages_Presented != nil {
 			for _, i := range p.Embed.EmbedImages_Presented.Images {
 				fmt.Println(" {" + i.Fullsize + "}")
