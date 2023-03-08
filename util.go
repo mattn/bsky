@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func printPost(p *bsky.FeedPost_View, parent string) {
+func printPost(p *bsky.FeedPost_View) {
 	rec := p.Record.Val.(*bsky.FeedPost)
 	color.Set(color.FgHiRed)
 	fmt.Print(p.Author.Handle)
@@ -52,9 +52,9 @@ func printPost(p *bsky.FeedPost_View, parent string) {
 			fmt.Print(string(rs[off:]))
 		}
 		fmt.Println()
-		for _, e := range rec.Entities {
-			fmt.Printf(" {%s}\n", e.Value)
-		}
+		//for _, e := range rec.Entities {
+		//	fmt.Printf(" {%s}\n", e.Value)
+		//}
 	} else {
 		fmt.Println(rec.Text)
 	}
@@ -71,10 +71,10 @@ func printPost(p *bsky.FeedPost_View, parent string) {
 		p.RepostCount,
 		p.ReplyCount,
 	)
-	if parent != "" {
+	if rec.Reply.Parent != nil {
 		fmt.Print(" > ")
 		color.Set(color.FgBlue)
-		fmt.Println(parent)
+		fmt.Println(rec.Reply.Parent.Uri)
 		color.Set(color.Reset)
 	}
 	fmt.Print(" - ")
@@ -89,7 +89,7 @@ func ltime(s string) time.Time {
 	if err != nil {
 		return time.Now()
 	}
-	return t
+	return t.Local()
 }
 
 func stringp(s *string) string {

@@ -48,9 +48,9 @@ func doThread(cCtx *cli.Context) error {
 	for i := 0; i < len(replies)/2; i++ {
 		replies[i], replies[len(replies)-i-1] = replies[len(replies)-i-1], replies[i]
 	}
-	printPost(resp.Thread.FeedGetPostThread_ThreadViewPost.Post, "")
+	printPost(resp.Thread.FeedGetPostThread_ThreadViewPost.Post)
 	for _, r := range replies {
-		printPost(r.FeedGetPostThread_ThreadViewPost.Post, "")
+		printPost(r.FeedGetPostThread_ThreadViewPost.Post)
 	}
 	return nil
 }
@@ -74,7 +74,7 @@ loop:
 			if handle == "self" {
 				handle = xrpcc.Auth.Did
 			}
-			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, n)
+			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, 100)
 			if err != nil {
 				return fmt.Errorf("cannot get author feed: %w", err)
 			}
@@ -86,7 +86,7 @@ loop:
 			}
 		} else {
 			handle = "reverse-chronological"
-			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, n)
+			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, 100)
 			if err != nil {
 				return fmt.Errorf("cannot get timeline: %w", err)
 			}
@@ -114,11 +114,7 @@ loop:
 				if p.Reason != nil {
 					continue
 				}
-				var parent string
-				if p.Reply != nil {
-					parent = p.Reply.Parent.Uri
-				}
-				printPost(p.Post, parent)
+				printPost(p.Post)
 				n--
 				if n == 0 {
 					break loop
@@ -209,7 +205,7 @@ func doPost(cCtx *cli.Context) error {
 		if post.Reply != nil && post.Reply.Root != nil {
 			reply.Root = &comatproto.RepoStrongRef{Cid: post.Reply.Root.Cid, Uri: post.Reply.Root.Uri}
 		} else {
-			reply.Root = reply.Parent
+			reply.Root = &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri}
 		}
 	}
 
