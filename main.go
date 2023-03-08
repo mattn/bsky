@@ -171,28 +171,7 @@ func doPost(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	var images []*bsky.EmbedImages_Image
-	imageFn := cCtx.StringSlice("image")
-	if len(imageFn) > 0 {
-		for _, fn := range imageFn {
-			b, err := os.ReadFile(fn)
-			if err != nil {
-				return fmt.Errorf("cannot read image file: %w", err)
-			}
-			resp, err := comatproto.BlobUpload(context.TODO(), xrpcc, bytes.NewReader(b))
-			if err != nil {
-				return fmt.Errorf("cannot upload image file: %w", err)
-			}
-			images = append(images, &bsky.EmbedImages_Image{
-				Alt: filepath.Base(fn),
-				Image: &lexutil.Blob{
-					Cid:      resp.Cid,
-					MimeType: http.DetectContentType(b),
-				},
-			})
-		}
-	}
-
+	// reply
 	var reply *bsky.FeedPost_ReplyRef
 	replyTo := cCtx.String("r")
 	if replyTo != "" {
@@ -225,13 +204,65 @@ func doPost(cCtx *cli.Context) error {
 		CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),
 		Reply:     reply,
 	}
-	if len(images) > 0 {
+
+	// links
+	links := cCtx.StringSlice("link")
+	if len(links) > 0 {
+		for _, link := range links {
+			post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
+				Index: &bsky.FeedPost_TextSlice{
+					Start: 0,
+					End:   0,
+				},
+				Type:  "link",
+				Value: link,
+			})
+		}
+	}
+
+	// mentions
+	mentions := cCtx.StringSlice("mention")
+	if len(mentions) > 0 {
+		for _, mention := range mentions {
+			post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
+				Index: &bsky.FeedPost_TextSlice{
+					Start: 0,
+					End:   0,
+				},
+				Type:  "mention",
+				Value: mention,
+			})
+		}
+	}
+
+	// embeded images
+	imageFn := cCtx.StringSlice("image")
+	if len(imageFn) > 0 {
+		var images []*bsky.EmbedImages_Image
+		for _, fn := range imageFn {
+			b, err := os.ReadFile(fn)
+			if err != nil {
+				return fmt.Errorf("cannot read image file: %w", err)
+			}
+			resp, err := comatproto.BlobUpload(context.TODO(), xrpcc, bytes.NewReader(b))
+			if err != nil {
+				return fmt.Errorf("cannot upload image file: %w", err)
+			}
+			images = append(images, &bsky.EmbedImages_Image{
+				Alt: filepath.Base(fn),
+				Image: &lexutil.Blob{
+					Cid:      resp.Cid,
+					MimeType: http.DetectContentType(b),
+				},
+			})
+		}
 		post.Embed = &bsky.FeedPost_Embed{
 			EmbedImages: &bsky.EmbedImages{
 				Images: images,
 			},
 		}
 	}
+
 	resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 		Collection: "app.bsky.feed.post",
 		Did:        xrpcc.Auth.Did,
@@ -639,14 +670,11 @@ func doTimeline(cCtx *cli.Context) error {
 				if p.Reason != nil {
 					continue
 				}
-				printPost(p.Post)
+				var parent string
 				if p.Reply != nil {
-					fmt.Print(" > ")
-					color.Set(color.FgBlue)
-					fmt.Println(p.Reply.Parent.Uri)
-					color.Set(color.Reset)
+					parent = p.Reply.Parent.Uri
 				}
-				fmt.Println()
+				printPost(p.Post, parent)
 			}
 		}
 		if cursor == "" {
@@ -657,7 +685,7 @@ func doTimeline(cCtx *cli.Context) error {
 	return nil
 }
 
-func printPost(p *bsky.FeedPost_View) {
+func printPost(p *bsky.FeedPost_View, parent string) {
 	rec := p.Record.Val.(*bsky.FeedPost)
 	color.Set(color.FgHiRed)
 	fmt.Print(p.Author.Handle)
@@ -683,10 +711,17 @@ func printPost(p *bsky.FeedPost_View) {
 		p.RepostCount,
 		p.ReplyCount,
 	)
+	if parent != "" {
+		fmt.Print(" > ")
+		color.Set(color.FgBlue)
+		fmt.Println(parent)
+		color.Set(color.Reset)
+	}
 	fmt.Print(" - ")
 	color.Set(color.FgBlue)
 	fmt.Println(p.Uri)
 	color.Set(color.Reset)
+	fmt.Println()
 }
 
 func doThread(cCtx *cli.Context) error {
@@ -717,11 +752,9 @@ func doThread(cCtx *cli.Context) error {
 	for i := 0; i < len(replies)/2; i++ {
 		replies[i], replies[len(replies)-i-1] = replies[len(replies)-i-1], replies[i]
 	}
-	printPost(resp.Thread.FeedGetPostThread_ThreadViewPost.Post)
-	fmt.Println()
+	printPost(resp.Thread.FeedGetPostThread_ThreadViewPost.Post, "")
 	for _, r := range replies {
-		printPost(r.FeedGetPostThread_ThreadViewPost.Post)
-		fmt.Println()
+		printPost(r.FeedGetPostThread_ThreadViewPost.Post, "")
 	}
 	return nil
 }
@@ -889,6 +922,8 @@ func main() {
 					&cli.StringFlag{Name: "r"},
 					&cli.BoolFlag{Name: "stdin"},
 					&cli.StringSliceFlag{Name: "image", Aliases: []string{"i"}},
+					&cli.StringSliceFlag{Name: "link", Aliases: []string{"l"}},
+					&cli.StringSliceFlag{Name: "mention", Aliases: []string{"m"}},
 				},
 				HelpName:  "post",
 				ArgsUsage: "[text]",
