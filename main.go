@@ -105,9 +105,12 @@ func main() {
 				Description: "Show votes of the post",
 				Usage:       "Show votes of the post",
 				UsageText:   "bsky votes [uri]",
-				HelpName:    "votes",
-				Action:      doVotes,
-				ArgsUsage:   "[uri]",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName:  "votes",
+				Action:    doVotes,
+				ArgsUsage: "[uri]",
 			},
 			{
 				Name:        "repost",
@@ -122,8 +125,11 @@ func main() {
 				Description: "Show reposts of the post",
 				Usage:       "Show reposts of the post",
 				UsageText:   "bsky reposts [uri]",
-				HelpName:    "reposts",
-				Action:      doReposts,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "reposts",
+				Action:   doReposts,
 			},
 			{
 				Name:        "follow",
