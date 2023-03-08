@@ -34,8 +34,13 @@ func doThread(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
+	arg := cCtx.Args().First()
+	if !strings.HasPrefix(arg, "at://did:plc:") {
+		arg = "at://did:plc:" + arg
+	}
+
 	n := cCtx.Int64("n")
-	resp, err := bsky.FeedGetPostThread(context.TODO(), xrpcc, n, cCtx.Args().First())
+	resp, err := bsky.FeedGetPostThread(context.TODO(), xrpcc, n, arg)
 	if err != nil {
 		return fmt.Errorf("cannot get post thread: %w", err)
 	}
@@ -326,9 +331,8 @@ func doVote(cCtx *cli.Context) error {
 }
 
 func doVotes(cCtx *cli.Context) error {
-	arg := cCtx.Args().First()
-	if arg == "" {
-		cli.ShowSubcommandHelpAndExit(cCtx, 1)
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
 	}
 
 	xrpcc, err := makeXRPCC(cCtx)
@@ -336,6 +340,7 @@ func doVotes(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
+	arg := cCtx.Args().First()
 	parts := strings.Split(arg, "/")
 	if len(parts) < 3 {
 		return fmt.Errorf("invalid post uri: %q", arg)
@@ -434,7 +439,6 @@ func doReposts(cCtx *cli.Context) error {
 	}
 
 	arg := cCtx.Args().First()
-
 	parts := strings.Split(arg, "/")
 	if len(parts) < 3 {
 		return fmt.Errorf("invalid post uri: %q", arg)
