@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -137,7 +136,7 @@ func doLogin(cCtx *cli.Context) error {
 	cfg.Handle = cCtx.Args().Get(0)
 	cfg.Password = cCtx.Args().Get(1)
 	if cfg.Handle == "" || cfg.Password == "" {
-		return errors.New("handle and pasword are required")
+		cli.ShowSubcommandHelpAndExit(cCtx, 1)
 	}
 	b, err := json.MarshalIndent(&cfg, "", "  ")
 	if err != nil {
@@ -151,6 +150,22 @@ func doLogin(cCtx *cli.Context) error {
 }
 
 func doPost(cCtx *cli.Context) error {
+	stdin := cCtx.Bool("stdin")
+	if !stdin && !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+	text := strings.Join(cCtx.Args().Slice(), " ")
+	if stdin {
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+		text = string(b)
+	}
+	if strings.TrimSpace(text) == "" {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -205,7 +220,6 @@ func doPost(cCtx *cli.Context) error {
 		}
 	}
 
-	text := strings.Join(cCtx.Args().Slice(), " ")
 	post := &bsky.FeedPost{
 		Text:      text,
 		CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),
@@ -234,49 +248,56 @@ func doPost(cCtx *cli.Context) error {
 }
 
 func doVote(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	arg := cCtx.Args().First()
+	for _, arg := range cCtx.Args().Slice() {
+		parts := strings.Split(arg, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		collection := parts[len(parts)-2]
+		did := parts[2]
 
-	parts := strings.Split(arg, "/")
-	if len(parts) < 3 {
-		return fmt.Errorf("invalid post uri: %q", arg)
-	}
-	rkey := parts[len(parts)-1]
-	collection := parts[len(parts)-2]
-	did := parts[2]
+		dir := cCtx.Args().Get(1)
+		if dir == "" {
+			dir = "up"
+		}
 
-	dir := cCtx.Args().Get(1)
-	if dir == "" {
-		dir = "up"
-	}
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+		if err != nil {
+			return fmt.Errorf("getting record: %w", err)
+		}
 
-	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
-	if err != nil {
-		return fmt.Errorf("getting record: %w", err)
-	}
-
-	_, err = bsky.FeedSetVote(context.TODO(), xrpcc, &bsky.FeedSetVote_Input{
-		Subject:   &comatproto.RepoStrongRef{Uri: resp.Uri, Cid: *resp.Cid},
-		Direction: dir,
-	})
-	if err != nil {
-		return fmt.Errorf("cannot create vote: %w", err)
+		_, err = bsky.FeedSetVote(context.TODO(), xrpcc, &bsky.FeedSetVote_Input{
+			Subject:   &comatproto.RepoStrongRef{Uri: resp.Uri, Cid: *resp.Cid},
+			Direction: dir,
+		})
+		if err != nil {
+			return fmt.Errorf("cannot create vote: %w", err)
+		}
 	}
 
 	return nil
 }
 
 func doVotes(cCtx *cli.Context) error {
+	arg := cCtx.Args().First()
+	if arg == "" {
+		cli.ShowSubcommandHelpAndExit(cCtx, 1)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
-
-	arg := cCtx.Args().First()
 
 	parts := strings.Split(arg, "/")
 	if len(parts) < 3 {
@@ -320,48 +341,56 @@ func doVotes(cCtx *cli.Context) error {
 }
 
 func doRepost(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	arg := cCtx.Args().First()
+	for _, arg := range cCtx.Args().Slice() {
+		parts := strings.Split(arg, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		collection := parts[len(parts)-2]
+		did := parts[2]
 
-	parts := strings.Split(arg, "/")
-	if len(parts) < 3 {
-		return fmt.Errorf("invalid post uri: %q", arg)
-	}
-	rkey := parts[len(parts)-1]
-	collection := parts[len(parts)-2]
-	did := parts[2]
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+		if err != nil {
+			return fmt.Errorf("getting record: %w", err)
+		}
 
-	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
-	if err != nil {
-		return fmt.Errorf("getting record: %w", err)
-	}
-
-	repost := &bsky.FeedRepost{
-		CreatedAt: time.Now().Format(time.RFC3339),
-		Subject: &comatproto.RepoStrongRef{
-			Uri: resp.Uri,
-			Cid: *resp.Cid,
-		},
-	}
-	_, err = comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-		Collection: "app.bsky.feed.repost",
-		Did:        xrpcc.Auth.Did,
-		Record: lexutil.LexiconTypeDecoder{
-			Val: repost,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("cannot create repost: %w", err)
+		repost := &bsky.FeedRepost{
+			CreatedAt: time.Now().Format(time.RFC3339),
+			Subject: &comatproto.RepoStrongRef{
+				Uri: resp.Uri,
+				Cid: *resp.Cid,
+			},
+		}
+		_, err = comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+			Collection: "app.bsky.feed.repost",
+			Did:        xrpcc.Auth.Did,
+			Record: lexutil.LexiconTypeDecoder{
+				Val: repost,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("cannot create repost: %w", err)
+		}
 	}
 
 	return nil
 }
 
 func doReposts(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -406,6 +435,10 @@ func doReposts(cCtx *cli.Context) error {
 }
 
 func doFollow(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -524,25 +557,33 @@ func doFollowers(cCtx *cli.Context) error {
 }
 
 func doDelete(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	arg := cCtx.Args().First()
+	for _, arg := range cCtx.Args().Slice() {
+		parts := strings.Split(arg, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		schema := parts[len(parts)-2]
 
-	parts := strings.Split(arg, "/")
-	if len(parts) < 3 {
-		return fmt.Errorf("invalid post uri: %q", arg)
+		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+			Did:        xrpcc.Auth.Did,
+			Collection: schema,
+			Rkey:       rkey,
+		})
+		if err != nil {
+			return fmt.Errorf("cannot delete post: %w", err)
+		}
 	}
-	rkey := parts[len(parts)-1]
-	schema := parts[len(parts)-2]
-
-	return comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
-		Did:        xrpcc.Auth.Did,
-		Collection: schema,
-		Rkey:       rkey,
-	})
+	return nil
 }
 
 func doTimeline(cCtx *cli.Context) error {
@@ -555,46 +596,62 @@ func doTimeline(cCtx *cli.Context) error {
 
 	n := cCtx.Int64("n")
 	handle := cCtx.String("handle")
-	if handle != "" {
-		if handle == "self" {
-			handle = xrpcc.Auth.Did
-		}
-		resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, "", n)
-		if err != nil {
-			return fmt.Errorf("cannot get author feed: %w", err)
-		}
-		feed = resp.Feed
-	} else {
-		handle = "reverse-chronological"
-		resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, "", n)
-		if err != nil {
-			return fmt.Errorf("cannot get timeline: %w", err)
-		}
-		feed = resp.Feed
-	}
 
-	if cCtx.Bool("json") {
-		for _, p := range feed {
-			json.NewEncoder(os.Stdout).Encode(p)
+	var cursor string
+	for {
+		if handle != "" {
+			if handle == "self" {
+				handle = xrpcc.Auth.Did
+			}
+			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, n)
+			if err != nil {
+				return fmt.Errorf("cannot get author feed: %w", err)
+			}
+			feed = resp.Feed
+			if resp.Cursor != nil {
+				cursor = *resp.Cursor
+			} else {
+				cursor = ""
+			}
+		} else {
+			handle = "reverse-chronological"
+			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, n)
+			if err != nil {
+				return fmt.Errorf("cannot get timeline: %w", err)
+			}
+			feed = resp.Feed
+			if resp.Cursor != nil {
+				cursor = *resp.Cursor
+			} else {
+				cursor = ""
+			}
 		}
-		return nil
-	}
 
-	for i := 0; i < len(feed)/2; i++ {
-		feed[i], feed[len(feed)-i-1] = feed[len(feed)-i-1], feed[i]
-	}
-	for _, p := range feed {
-		if p.Reason != nil {
-			continue
+		if cCtx.Bool("json") {
+			for _, p := range feed {
+				json.NewEncoder(os.Stdout).Encode(p)
+			}
+		} else {
+			for i := 0; i < len(feed)/2; i++ {
+				feed[i], feed[len(feed)-i-1] = feed[len(feed)-i-1], feed[i]
+			}
+			for _, p := range feed {
+				if p.Reason != nil {
+					continue
+				}
+				printPost(p.Post)
+				if p.Reply != nil {
+					fmt.Print(" > ")
+					color.Set(color.FgBlue)
+					fmt.Println(p.Reply.Parent.Uri)
+					color.Set(color.Reset)
+				}
+				fmt.Println()
+			}
 		}
-		printPost(p.Post)
-		if p.Reply != nil {
-			fmt.Print(" > ")
-			color.Set(color.FgBlue)
-			fmt.Println(p.Reply.Parent.Uri)
-			color.Set(color.Reset)
+		if cursor == "" {
+			break
 		}
-		fmt.Println()
 	}
 
 	return nil
@@ -633,6 +690,10 @@ func printPost(p *bsky.FeedPost_View) {
 }
 
 func doThread(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -708,6 +769,10 @@ func doShowProfile(cCtx *cli.Context) error {
 }
 
 func doUpdateProfile(cCtx *cli.Context) error {
+	if cCtx.Args().Len() != 2 {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -758,7 +823,12 @@ func doUpdateProfile(cCtx *cli.Context) error {
 }
 
 func main() {
+
 	app := &cli.App{
+		//CustomAppHelpTemplate: HelpTemplate,
+		Name:        name,
+		Usage:       name,
+		Version:     version,
 		Description: "A cli application for bluesky",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "a", Usage: "profile name"},
@@ -766,18 +836,20 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:      "show-profile",
-				Usage:     "show profile",
-				UsageText: "bsky show-profile",
+				Name:        "show-profile",
+				Description: "show profile",
+				Usage:       "show profile",
+				UsageText:   "bsky show-profile",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 				},
 				Action: doShowProfile,
 			},
 			{
-				Name:      "update-profile",
-				Usage:     "update profile",
-				UsageText: "bsky update-profile",
+				Name:        "update-profile",
+				Description: "update profile",
+				Usage:       "update profile",
+				UsageText:   "bsky update-profile",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "avatar", Value: "", Usage: "avatar image", TakesFile: true},
 					&cli.StringFlag{Name: "banner", Value: "", Usage: "banner image", TakesFile: true},
@@ -785,10 +857,11 @@ func main() {
 				Action: doUpdateProfile,
 			},
 			{
-				Name:      "timeline",
-				Aliases:   []string{"tl"},
-				Usage:     "show timeline",
-				UsageText: "bsky timeline",
+				Name:        "timeline",
+				Description: "show timeline",
+				Usage:       "show timeline",
+				UsageText:   "bsky timeline",
+				Aliases:     []string{"tl"},
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 					&cli.IntFlag{Name: "n", Value: 30, Usage: "number of items"},
@@ -797,9 +870,10 @@ func main() {
 				Action: doTimeline,
 			},
 			{
-				Name:      "thread",
-				Usage:     "show thread",
-				UsageText: "bsky thread [uri]",
+				Name:        "thread",
+				Description: "show thread",
+				Usage:       "show thread",
+				UsageText:   "bsky thread [uri]",
 				Flags: []cli.Flag{
 					&cli.IntFlag{Name: "n", Value: 30, Usage: "number of items"},
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
@@ -807,9 +881,10 @@ func main() {
 				Action: doThread,
 			},
 			{
-				Name:      "post",
-				Usage:     "post new text",
-				UsageText: "bsky post [text]",
+				Name:        "post",
+				Description: "post new text",
+				Usage:       "post new text",
+				UsageText:   "bsky post [text]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "r"},
 					&cli.BoolFlag{Name: "stdin"},
@@ -820,44 +895,51 @@ func main() {
 				Action:    doPost,
 			},
 			{
-				Name:      "vote",
-				Usage:     "vote the post",
-				UsageText: "bsky vote [uri]",
-				HelpName:  "vote",
-				Action:    doVote,
+				Name:        "vote",
+				Description: "vote the post",
+				Usage:       "vote the post",
+				UsageText:   "bsky vote [uri]",
+				HelpName:    "vote",
+				Action:      doVote,
 			},
 			{
-				Name:      "votes",
-				Usage:     "show votes of the post",
-				UsageText: "bsky votes [uri]",
-				HelpName:  "votes",
-				Action:    doVotes,
+				Name:        "votes",
+				Description: "show votes of the post",
+				Usage:       "show votes of the post",
+				UsageText:   "bsky votes [uri]",
+				HelpName:    "votes",
+				Action:      doVotes,
+				ArgsUsage:   "[uri]",
 			},
 			{
-				Name:      "repost",
-				Usage:     "repost the post",
-				UsageText: "bsky repost [uri]",
-				HelpName:  "repost",
-				Action:    doRepost,
+				Name:        "repost",
+				Description: "repost the post",
+				Usage:       "repost the post",
+				UsageText:   "bsky repost [uri]",
+				HelpName:    "repost",
+				Action:      doRepost,
 			},
 			{
-				Name:      "reposts",
-				Usage:     "show reposts of the post",
-				UsageText: "bsky reposts [uri]",
-				HelpName:  "reposts",
-				Action:    doReposts,
+				Name:        "reposts",
+				Description: "show reposts of the post",
+				Usage:       "show reposts of the post",
+				UsageText:   "bsky reposts [uri]",
+				HelpName:    "reposts",
+				Action:      doReposts,
 			},
 			{
-				Name:      "follow",
-				Usage:     "follow the handle",
-				UsageText: "bsky follow [handle]",
-				HelpName:  "follow",
-				Action:    doFollow,
+				Name:        "follow",
+				Description: "follow the handle",
+				Usage:       "follow the handle",
+				UsageText:   "bsky follow [handle]",
+				HelpName:    "follow",
+				Action:      doFollow,
 			},
 			{
-				Name:      "follows",
-				Usage:     "show follows",
-				UsageText: "bsky follows",
+				Name:        "follows",
+				Description: "show follows",
+				Usage:       "show follows",
+				UsageText:   "bsky follows",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
@@ -865,9 +947,10 @@ func main() {
 				Action:   doFollows,
 			},
 			{
-				Name:      "followers",
-				Usage:     "show followers",
-				UsageText: "bsky followres",
+				Name:        "followers",
+				Description: "show followers",
+				Usage:       "show followers",
+				UsageText:   "bsky followres",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
@@ -875,11 +958,12 @@ func main() {
 				Action:   doFollowers,
 			},
 			{
-				Name:      "delete",
-				Usage:     "delete the note",
-				UsageText: "bsky delete [cid]",
-				HelpName:  "delete",
-				Action:    doDelete,
+				Name:        "delete",
+				Description: "delete the note",
+				Usage:       "delete the note",
+				UsageText:   "bsky delete [cid]",
+				HelpName:    "delete",
+				Action:      doDelete,
 			},
 			{
 				Name:      "login",
