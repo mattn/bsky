@@ -405,6 +405,42 @@ func doReposts(cCtx *cli.Context) error {
 	return nil
 }
 
+func doFollow(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	for _, arg := range cCtx.Args().Slice() {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+		if err != nil {
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+
+		follow := bsky.GraphFollow{
+			LexiconTypeID: "app.bsky.graph.follow",
+			CreatedAt:     time.Now().Format(time.RFC3339),
+			Subject: &bsky.ActorRef{
+				DeclarationCid: profile.Declaration.Cid,
+				Did:            profile.Did,
+			},
+		}
+
+		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+			Collection: "app.bsky.graph.follow",
+			Did:        xrpcc.Auth.Did,
+			Record: lexutil.LexiconTypeDecoder{
+				Val: &follow,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp.Uri)
+	}
+	return nil
+}
+
 func doFollows(cCtx *cli.Context) error {
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
@@ -416,26 +452,33 @@ func doFollows(cCtx *cli.Context) error {
 		arg = xrpcc.Auth.Handle
 	}
 
-	follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, "", 99, arg)
-	if err != nil {
-		return fmt.Errorf("getting record: %w", err)
-	}
-
-	if cCtx.Bool("json") {
-		for _, f := range follows.Follows {
-			json.NewEncoder(os.Stdout).Encode(f)
+	var cursor string
+	for {
+		follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, cursor, 100, arg)
+		if err != nil {
+			return fmt.Errorf("getting record: %w", err)
 		}
-		return nil
-	}
 
-	for _, f := range follows.Follows {
-		color.Set(color.FgHiRed)
-		fmt.Print(f.Handle)
-		color.Set(color.Reset)
-		fmt.Printf(" [%s] ", stringp(f.DisplayName))
-		color.Set(color.FgBlue)
-		fmt.Println(f.Did)
-		color.Set(color.Reset)
+		if cCtx.Bool("json") {
+			for _, f := range follows.Follows {
+				json.NewEncoder(os.Stdout).Encode(f)
+			}
+			return nil
+		}
+
+		for _, f := range follows.Follows {
+			color.Set(color.FgHiRed)
+			fmt.Print(f.Handle)
+			color.Set(color.Reset)
+			fmt.Printf(" [%s] ", stringp(f.DisplayName))
+			color.Set(color.FgBlue)
+			fmt.Println(f.Did)
+			color.Set(color.Reset)
+		}
+		if follows.Cursor == nil {
+			break
+		}
+		cursor = *follows.Cursor
 	}
 	return nil
 }
@@ -451,26 +494,33 @@ func doFollowers(cCtx *cli.Context) error {
 		arg = xrpcc.Auth.Handle
 	}
 
-	follows, err := bsky.GraphGetFollowers(context.TODO(), xrpcc, "", 99, arg)
-	if err != nil {
-		return fmt.Errorf("getting record: %w", err)
-	}
-
-	if cCtx.Bool("json") {
-		for _, f := range follows.Followers {
-			json.NewEncoder(os.Stdout).Encode(f)
+	var cursor string
+	for {
+		followers, err := bsky.GraphGetFollowers(context.TODO(), xrpcc, cursor, 100, arg)
+		if err != nil {
+			return fmt.Errorf("getting record: %w", err)
 		}
-		return nil
-	}
 
-	for _, f := range follows.Followers {
-		color.Set(color.FgHiRed)
-		fmt.Print(f.Handle)
-		color.Set(color.Reset)
-		fmt.Printf(" [%s] ", stringp(f.DisplayName))
-		color.Set(color.FgBlue)
-		fmt.Println(f.Did)
-		color.Set(color.Reset)
+		if cCtx.Bool("json") {
+			for _, f := range followers.Followers {
+				json.NewEncoder(os.Stdout).Encode(f)
+			}
+			return nil
+		}
+
+		for _, f := range followers.Followers {
+			color.Set(color.FgHiRed)
+			fmt.Print(f.Handle)
+			color.Set(color.Reset)
+			fmt.Printf(" [%s] ", stringp(f.DisplayName))
+			color.Set(color.FgBlue)
+			fmt.Println(f.Did)
+			color.Set(color.Reset)
+		}
+		if followers.Cursor == nil {
+			break
+		}
+		cursor = *followers.Cursor
 	}
 	return nil
 }
@@ -799,13 +849,13 @@ func main() {
 				HelpName:  "reposts",
 				Action:    doReposts,
 			},
-			//{
-			//	Name:      "follow",
-			//	Usage:     "follow the handle",
-			//	UsageText: "bsky follow [handle]",
-			//	HelpName:  "follow",
-			//	Action:    doFollow,
-			//},
+			{
+				Name:      "follow",
+				Usage:     "follow the handle",
+				UsageText: "bsky follow [handle]",
+				HelpName:  "follow",
+				Action:    doFollow,
+			},
 			{
 				Name:      "follows",
 				Usage:     "show follows",
