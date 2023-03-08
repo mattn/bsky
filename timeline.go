@@ -367,7 +367,7 @@ func doVotes(cCtx *cli.Context) error {
 		fmt.Print(v.Actor.Handle)
 		color.Set(color.Reset)
 		fmt.Printf(" [%s]", stringp(v.Actor.DisplayName))
-		fmt.Printf(" (%v)\n", ltime(v.CreatedAt))
+		fmt.Printf(" (%v)\n", timep(v.CreatedAt))
 	}
 
 	return nil
