@@ -71,7 +71,7 @@ func printPost(p *bsky.FeedPost_View) {
 		p.RepostCount,
 		p.ReplyCount,
 	)
-	if rec.Reply.Parent != nil {
+	if rec.Reply != nil && rec.Reply.Parent != nil {
 		fmt.Print(" > ")
 		color.Set(color.FgBlue)
 		fmt.Println(rec.Reply.Parent.Uri)
