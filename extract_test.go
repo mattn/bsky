@@ -35,7 +35,7 @@ func TestExtractMentions(t *testing.T) {
 		{name: "1", input: `返事は @mattn へ`, want: []entry{{text: "mattn", start: 4, end: 10}}},
 		{name: "2", input: `返事は @mattn-- へ`, want: []entry{{text: "mattn", start: 4, end: 10}}},
 		{name: "3", input: `返事は @mattn.jp へ`, want: []entry{{text: "mattn.jp", start: 4, end: 13}}},
-		{name: "3", input: `返事は @@mattn へ`, want: []entry{{text: "mattn", start: 5, end: 11}}},
+		{name: "4", input: `返事は @@mattn へ`, want: []entry{{text: "mattn", start: 5, end: 11}}},
 	}
 	for _, test := range tests {
 		result := extractMentions(test.input)
