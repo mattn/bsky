@@ -22,9 +22,7 @@ type Config struct {
 }
 
 func main() {
-
 	app := &cli.App{
-		//CustomAppHelpTemplate: HelpTemplate,
 		Name:        name,
 		Usage:       name,
 		Version:     version,
