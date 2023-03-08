@@ -67,6 +67,8 @@ func doTimeline(cCtx *cli.Context) error {
 	handle := cCtx.String("handle")
 
 	var cursor string
+
+loop:
 	for {
 		if handle != "" {
 			if handle == "self" {
@@ -99,6 +101,10 @@ func doTimeline(cCtx *cli.Context) error {
 		if cCtx.Bool("json") {
 			for _, p := range feed {
 				json.NewEncoder(os.Stdout).Encode(p)
+				n--
+				if n == 0 {
+					break loop
+				}
 			}
 		} else {
 			for i := 0; i < len(feed)/2; i++ {
@@ -113,6 +119,10 @@ func doTimeline(cCtx *cli.Context) error {
 					parent = p.Reply.Parent.Uri
 				}
 				printPost(p.Post, parent)
+				n--
+				if n == 0 {
+					break loop
+				}
 			}
 		}
 		if cursor == "" {
