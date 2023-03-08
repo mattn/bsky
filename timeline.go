@@ -215,7 +215,7 @@ func doPost(cCtx *cli.Context) error {
 
 	post := &bsky.FeedPost{
 		Text:      text,
-		CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),
+		CreatedAt: time.Now().Format(time.RFC3339),
 		Reply:     reply,
 	}
 

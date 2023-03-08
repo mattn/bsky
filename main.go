@@ -191,6 +191,14 @@ func main() {
 				HelpName: "login",
 				Action:   doLogin,
 			},
+			{
+				Name:        "notification",
+				Description: "Show notifications",
+				Usage:       "Show notifications",
+				UsageText:   "bsky notification",
+				HelpName:    "notification",
+				Action:      doNotification,
+			},
 		},
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {

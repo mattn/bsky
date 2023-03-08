@@ -245,3 +245,45 @@ func doLogin(cCtx *cli.Context) error {
 	}
 	return nil
 }
+
+func doNotification(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	notifs, err := bsky.NotificationList(context.TODO(), xrpcc, "", 50)
+	if err != nil {
+		return err
+	}
+
+	if cCtx.Bool("json") {
+		for _, n := range notifs.Notifications {
+			json.NewEncoder(os.Stdout).Encode(n)
+		}
+		return nil
+	}
+
+	for _, n := range notifs.Notifications {
+		color.Set(color.FgHiRed)
+		fmt.Print(n.Author.Handle)
+		color.Set(color.Reset)
+		fmt.Printf(" [%s] ", stringp(n.Author.DisplayName))
+		color.Set(color.FgBlue)
+		fmt.Println(n.Author.Did)
+		color.Set(color.Reset)
+
+		switch v := n.Record.Val.(type) {
+		case *bsky.FeedPost:
+			fmt.Println(" " + n.Reason + " to " + n.Uri)
+		case *bsky.FeedRepost:
+			fmt.Printf(" reposted %s\n", v.Subject.Uri)
+		case *bsky.FeedVote:
+			fmt.Printf(" voted %v %s\n", v.Direction, v.Subject.Uri)
+		case *bsky.GraphFollow:
+			fmt.Println(" followed you")
+		}
+	}
+
+	return nil
+}
