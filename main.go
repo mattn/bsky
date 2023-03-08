@@ -463,17 +463,16 @@ func doFollows(cCtx *cli.Context) error {
 			for _, f := range follows.Follows {
 				json.NewEncoder(os.Stdout).Encode(f)
 			}
-			return nil
-		}
-
-		for _, f := range follows.Follows {
-			color.Set(color.FgHiRed)
-			fmt.Print(f.Handle)
-			color.Set(color.Reset)
-			fmt.Printf(" [%s] ", stringp(f.DisplayName))
-			color.Set(color.FgBlue)
-			fmt.Println(f.Did)
-			color.Set(color.Reset)
+		} else {
+			for _, f := range follows.Follows {
+				color.Set(color.FgHiRed)
+				fmt.Print(f.Handle)
+				color.Set(color.Reset)
+				fmt.Printf(" [%s] ", stringp(f.DisplayName))
+				color.Set(color.FgBlue)
+				fmt.Println(f.Did)
+				color.Set(color.Reset)
+			}
 		}
 		if follows.Cursor == nil {
 			break
@@ -505,17 +504,16 @@ func doFollowers(cCtx *cli.Context) error {
 			for _, f := range followers.Followers {
 				json.NewEncoder(os.Stdout).Encode(f)
 			}
-			return nil
-		}
-
-		for _, f := range followers.Followers {
-			color.Set(color.FgHiRed)
-			fmt.Print(f.Handle)
-			color.Set(color.Reset)
-			fmt.Printf(" [%s] ", stringp(f.DisplayName))
-			color.Set(color.FgBlue)
-			fmt.Println(f.Did)
-			color.Set(color.Reset)
+		} else {
+			for _, f := range followers.Followers {
+				color.Set(color.FgHiRed)
+				fmt.Print(f.Handle)
+				color.Set(color.Reset)
+				fmt.Printf(" [%s] ", stringp(f.DisplayName))
+				color.Set(color.FgBlue)
+				fmt.Println(f.Did)
+				color.Set(color.Reset)
+			}
 		}
 		if followers.Cursor == nil {
 			break
@@ -860,15 +858,21 @@ func main() {
 				Name:      "follows",
 				Usage:     "show follows",
 				UsageText: "bsky follows",
-				HelpName:  "follows",
-				Action:    doFollows,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "follows",
+				Action:   doFollows,
 			},
 			{
 				Name:      "followers",
 				Usage:     "show followers",
 				UsageText: "bsky followres",
-				HelpName:  "followers",
-				Action:    doFollowers,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "followers",
+				Action:   doFollowers,
 			},
 			{
 				Name:      "delete",
