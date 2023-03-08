@@ -205,34 +205,26 @@ func doPost(cCtx *cli.Context) error {
 		Reply:     reply,
 	}
 
-	// links
-	links := cCtx.StringSlice("link")
-	if len(links) > 0 {
-		for _, link := range links {
-			post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
-				Index: &bsky.FeedPost_TextSlice{
-					Start: 0,
-					End:   0,
-				},
-				Type:  "link",
-				Value: link,
-			})
-		}
+	for _, entry := range extractLinks(text) {
+		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
+			Index: &bsky.FeedPost_TextSlice{
+				Start: entry.start,
+				End:   entry.end,
+			},
+			Type:  "link",
+			Value: entry.text,
+		})
 	}
 
-	// mentions
-	mentions := cCtx.StringSlice("mention")
-	if len(mentions) > 0 {
-		for _, mention := range mentions {
-			post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
-				Index: &bsky.FeedPost_TextSlice{
-					Start: 0,
-					End:   0,
-				},
-				Type:  "mention",
-				Value: mention,
-			})
-		}
+	for _, entry := range extractMentions(text) {
+		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
+			Index: &bsky.FeedPost_TextSlice{
+				Start: entry.start,
+				End:   entry.end,
+			},
+			Type:  "mention",
+			Value: entry.text,
+		})
 	}
 
 	// embeded images
@@ -922,8 +914,6 @@ func main() {
 					&cli.StringFlag{Name: "r"},
 					&cli.BoolFlag{Name: "stdin"},
 					&cli.StringSliceFlag{Name: "image", Aliases: []string{"i"}},
-					&cli.StringSliceFlag{Name: "link", Aliases: []string{"l"}},
-					&cli.StringSliceFlag{Name: "mention", Aliases: []string{"m"}},
 				},
 				HelpName:  "post",
 				ArgsUsage: "[text]",
