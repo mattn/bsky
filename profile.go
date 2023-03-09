@@ -19,6 +19,10 @@ import (
 )
 
 func doShowProfile(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -145,6 +149,10 @@ func doFollow(cCtx *cli.Context) error {
 }
 
 func doFollows(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -186,6 +194,10 @@ func doFollows(cCtx *cli.Context) error {
 }
 
 func doFollowers(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
@@ -247,6 +259,10 @@ func doLogin(cCtx *cli.Context) error {
 }
 
 func doNotification(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)

@@ -65,6 +65,10 @@ func doThread(cCtx *cli.Context) error {
 }
 
 func doTimeline(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
 	xrpcc, err := makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
