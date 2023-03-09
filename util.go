@@ -84,12 +84,20 @@ func printPost(p *bsky.FeedPost_View) {
 	fmt.Println()
 }
 
+var formats = []string{
+	"2006-01-02T15:04:05.000Z",
+	"2006-01-02T15:04:05.000000Z",
+	"2006-01-02T15:04:05-07:00",
+}
+
 func timep(s string) time.Time {
-	t, err := time.Parse("2006-01-02T15:04:05.000Z", s)
-	if err != nil {
-		return time.Now()
+	for _, f := range formats {
+		t, err := time.Parse(f, s)
+		if err == nil {
+			return t.Local()
+		}
 	}
-	return t.Local()
+	panic(s)
 }
 
 func stringp(s *string) string {

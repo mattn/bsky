@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -90,7 +91,7 @@ func doTimeline(cCtx *cli.Context) error {
 			if err != nil {
 				return fmt.Errorf("cannot get author feed: %w", err)
 			}
-			feed = resp.Feed
+			feed = append(feed, resp.Feed...)
 			if resp.Cursor != nil {
 				cursor = *resp.Cursor
 			} else {
@@ -102,31 +103,36 @@ func doTimeline(cCtx *cli.Context) error {
 			if err != nil {
 				return fmt.Errorf("cannot get timeline: %w", err)
 			}
-			feed = resp.Feed
+			feed = append(feed, resp.Feed...)
 			if resp.Cursor != nil {
 				cursor = *resp.Cursor
 			} else {
 				cursor = ""
 			}
 		}
-
-		if cCtx.Bool("json") {
-			for _, p := range feed {
-				json.NewEncoder(os.Stdout).Encode(p)
-			}
-		} else {
-			for i := 0; i < len(feed)/2; i++ {
-				feed[i], feed[len(feed)-i-1] = feed[len(feed)-i-1], feed[i]
-			}
-			for _, p := range feed {
-				if p.Reason != nil {
-					continue
-				}
-				printPost(p.Post)
-			}
-		}
-		if cursor == "" {
+		if cursor == "" || int64(len(feed)) > n {
 			break
+		}
+	}
+
+	sort.Slice(feed, func(i, j int) bool {
+		ri := timep(feed[i].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
+		rj := timep(feed[j].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
+		return ri.Before(rj)
+	})
+	if int64(len(feed)) > n {
+		feed = feed[len(feed)-int(n):]
+	}
+	if cCtx.Bool("json") {
+		for _, p := range feed {
+			json.NewEncoder(os.Stdout).Encode(p)
+		}
+	} else {
+		for _, p := range feed {
+			//if p.Reason != nil {
+			//continue
+			//}
+			printPost(p.Post)
 		}
 	}
 
