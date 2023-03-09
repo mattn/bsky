@@ -108,8 +108,11 @@ func main() {
 				Description: "Vote the post",
 				Usage:       "Vote the post",
 				UsageText:   "bsky vote [uri]",
-				HelpName:    "vote",
-				Action:      doVote,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "down"},
+				},
+				HelpName: "vote",
+				Action:   doVote,
 			},
 			{
 				Name:        "votes",

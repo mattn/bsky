@@ -309,9 +309,9 @@ func doVote(cCtx *cli.Context) error {
 		collection := parts[len(parts)-2]
 		did := parts[2]
 
-		dir := cCtx.Args().Get(1)
-		if dir == "" {
-			dir = "up"
+		dir := "up"
+		if cCtx.Bool("down") {
+			dir = "down"
 		}
 
 		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
