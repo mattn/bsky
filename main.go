@@ -198,6 +198,7 @@ func main() {
 				Description: "Show notifications",
 				Usage:       "Show notifications",
 				UsageText:   "bsky notification",
+				Aliases:     []string{"notif"},
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "a", Usage: "show all"},
 				},
