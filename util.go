@@ -24,7 +24,7 @@ func printPost(p *bsky.FeedPost_View) {
 	fmt.Print(p.Author.Handle)
 	color.Set(color.Reset)
 	fmt.Printf(" [%s]", stringp(p.Author.DisplayName))
-	fmt.Printf(" (%v)\n", timep(rec.CreatedAt))
+	fmt.Printf(" (%s)\n", timep(rec.CreatedAt).Format(time.RFC3339))
 	if rec.Entities != nil {
 		sort.Slice(rec.Entities, func(i, j int) bool {
 			return rec.Entities[i].Index.Start < rec.Entities[j].Index.Start
