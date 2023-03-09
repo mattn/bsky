@@ -414,7 +414,7 @@ func doRepost(cCtx *cli.Context) error {
 				Cid: *resp.Cid,
 			},
 		}
-		_, err = comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+		repostResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 			Collection: "app.bsky.feed.repost",
 			Did:        xrpcc.Auth.Did,
 			Record: lexutil.LexiconTypeDecoder{
@@ -424,6 +424,7 @@ func doRepost(cCtx *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("cannot create repost: %w", err)
 		}
+		fmt.Println(repostResp.Uri)
 	}
 
 	return nil
