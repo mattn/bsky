@@ -313,12 +313,18 @@ func doVote(cCtx *cli.Context) error {
 			return fmt.Errorf("getting record: %w", err)
 		}
 
-		_, err = bsky.FeedSetVote(context.TODO(), xrpcc, &bsky.FeedSetVote_Input{
+		voteResp, err := bsky.FeedSetVote(context.TODO(), xrpcc, &bsky.FeedSetVote_Input{
 			Subject:   &comatproto.RepoStrongRef{Uri: resp.Uri, Cid: *resp.Cid},
 			Direction: dir,
 		})
 		if err != nil {
 			return fmt.Errorf("cannot create vote: %w", err)
+		}
+		if voteResp.Downvote != nil {
+			fmt.Println(*voteResp.Downvote)
+		}
+		if voteResp.Upvote != nil {
+			fmt.Println(*voteResp.Upvote)
 		}
 	}
 
