@@ -126,7 +126,7 @@ func doFollow(cCtx *cli.Context) error {
 
 		follow := bsky.GraphFollow{
 			LexiconTypeID: "app.bsky.graph.follow",
-			CreatedAt:     time.Now().Format(time.RFC3339),
+			CreatedAt:     time.Now().Local().Format(time.RFC3339),
 			Subject: &bsky.ActorRef{
 				DeclarationCid: profile.Declaration.Cid,
 				Did:            profile.Did,
@@ -304,7 +304,7 @@ func doNotification(cCtx *cli.Context) error {
 		}
 
 		bsky.NotificationUpdateSeen(context.TODO(), xrpcc, &bsky.NotificationUpdateSeen_Input{
-			SeenAt: time.Now().Format(time.RFC3339),
+			SeenAt: time.Now().Local().Format(time.RFC3339),
 		})
 	}
 

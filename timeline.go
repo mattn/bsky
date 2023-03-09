@@ -81,13 +81,12 @@ func doTimeline(cCtx *cli.Context) error {
 
 	var cursor string
 
-loop:
 	for {
 		if handle != "" {
 			if handle == "self" {
 				handle = xrpcc.Auth.Did
 			}
-			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, 100)
+			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, n)
 			if err != nil {
 				return fmt.Errorf("cannot get author feed: %w", err)
 			}
@@ -99,7 +98,7 @@ loop:
 			}
 		} else {
 			handle = "reverse-chronological"
-			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, 100)
+			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, n)
 			if err != nil {
 				return fmt.Errorf("cannot get timeline: %w", err)
 			}
@@ -114,10 +113,6 @@ loop:
 		if cCtx.Bool("json") {
 			for _, p := range feed {
 				json.NewEncoder(os.Stdout).Encode(p)
-				n--
-				if n == 0 {
-					break loop
-				}
 			}
 		} else {
 			for i := 0; i < len(feed)/2; i++ {
@@ -128,10 +123,6 @@ loop:
 					continue
 				}
 				printPost(p.Post)
-				n--
-				if n == 0 {
-					break loop
-				}
 			}
 		}
 		if cursor == "" {
@@ -224,7 +215,7 @@ func doPost(cCtx *cli.Context) error {
 
 	post := &bsky.FeedPost{
 		Text:      text,
-		CreatedAt: time.Now().Format(time.RFC3339),
+		CreatedAt: time.Now().Local().Format(time.RFC3339),
 		Reply:     reply,
 	}
 
@@ -411,7 +402,7 @@ func doRepost(cCtx *cli.Context) error {
 		}
 
 		repost := &bsky.FeedRepost{
-			CreatedAt: time.Now().Format(time.RFC3339),
+			CreatedAt: time.Now().Local().Format(time.RFC3339),
 			Subject: &comatproto.RepoStrongRef{
 				Uri: resp.Uri,
 				Cid: *resp.Cid,
