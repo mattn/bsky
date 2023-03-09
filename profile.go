@@ -265,6 +265,9 @@ func doNotification(cCtx *cli.Context) error {
 	}
 
 	for _, n := range notifs.Notifications {
+		if !cCtx.Bool("a") && n.IsRead {
+			continue
+		}
 		color.Set(color.FgHiRed)
 		fmt.Print(n.Author.Handle)
 		color.Set(color.Reset)
@@ -283,6 +286,10 @@ func doNotification(cCtx *cli.Context) error {
 		case *bsky.GraphFollow:
 			fmt.Println(" followed you")
 		}
+
+		bsky.NotificationUpdateSeen(context.TODO(), xrpcc, &bsky.NotificationUpdateSeen_Input{
+			SeenAt: time.Now().Format(time.RFC3339),
+		})
 	}
 
 	return nil

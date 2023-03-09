@@ -156,6 +156,7 @@ func main() {
 				Usage:       "Show follows",
 				UsageText:   "bsky follows",
 				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
 				HelpName: "follows",
@@ -167,6 +168,7 @@ func main() {
 				Usage:       "Show followers",
 				UsageText:   "bsky followres",
 				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
 				HelpName: "followers",
@@ -196,8 +198,11 @@ func main() {
 				Description: "Show notifications",
 				Usage:       "Show notifications",
 				UsageText:   "bsky notification",
-				HelpName:    "notification",
-				Action:      doNotification,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "a", Usage: "show all"},
+				},
+				HelpName: "notification",
+				Action:   doNotification,
 			},
 		},
 		Metadata: map[string]any{},
