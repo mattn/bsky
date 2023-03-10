@@ -150,6 +150,9 @@ func doDelete(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
+		if !strings.HasPrefix(arg, "at://did:plc:") {
+			arg = "at://did:plc:" + arg
+		}
 		parts := strings.Split(arg, "/")
 		if len(parts) < 3 {
 			return fmt.Errorf("invalid post uri: %q", arg)
@@ -400,6 +403,9 @@ func doRepost(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
+		if !strings.HasPrefix(arg, "at://did:plc:") {
+			arg = "at://did:plc:" + arg
+		}
 		parts := strings.Split(arg, "/")
 		if len(parts) < 3 {
 			return fmt.Errorf("invalid post uri: %q", arg)
