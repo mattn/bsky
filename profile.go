@@ -105,7 +105,10 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		Avatar:      avatar,
 		Banner:      banner,
 	})
-	return fmt.Errorf("cannot update profile: %w", err)
+	if err != nil {
+		return fmt.Errorf("cannot update profile: %w", err)
+	}
+	return nil
 }
 
 func doFollow(cCtx *cli.Context) error {
