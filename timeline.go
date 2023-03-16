@@ -304,6 +304,9 @@ func doVote(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
+		if !strings.HasPrefix(arg, "at://did:plc:") {
+			arg = "at://did:plc:" + arg
+		}
 		parts := strings.Split(arg, "/")
 		if len(parts) < 3 {
 			return fmt.Errorf("invalid post uri: %q", arg)
@@ -351,6 +354,9 @@ func doVotes(cCtx *cli.Context) error {
 	}
 
 	arg := cCtx.Args().First()
+	if !strings.HasPrefix(arg, "at://did:plc:") {
+		arg = "at://did:plc:" + arg
+	}
 	parts := strings.Split(arg, "/")
 	if len(parts) < 3 {
 		return fmt.Errorf("invalid post uri: %q", arg)
@@ -453,6 +459,9 @@ func doReposts(cCtx *cli.Context) error {
 	}
 
 	arg := cCtx.Args().First()
+	if !strings.HasPrefix(arg, "at://did:plc:") {
+		arg = "at://did:plc:" + arg
+	}
 	parts := strings.Split(arg, "/")
 	if len(parts) < 3 {
 		return fmt.Errorf("invalid post uri: %q", arg)
