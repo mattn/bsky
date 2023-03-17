@@ -47,7 +47,7 @@ func main() {
 				Name:        "update-profile",
 				Description: "Update profile",
 				Usage:       "Update profile",
-				UsageText:   "bsky update-profile [display name] [description]",
+				UsageText:   "bsky update-profile [OPTIONS]... [{display name} [description]]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "avatar", Value: "", Usage: "avatar image", TakesFile: true},
 					&cli.StringFlag{Name: "banner", Value: "", Usage: "banner image", TakesFile: true},

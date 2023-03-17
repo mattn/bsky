@@ -55,7 +55,28 @@ func doShowProfile(cCtx *cli.Context) error {
 }
 
 func doUpdateProfile(cCtx *cli.Context) error {
-	if cCtx.Args().Len() != 2 {
+	// read arguments
+	var name *string
+	if cCtx.Args().Len() >= 1 {
+		v := cCtx.Args().Get(0)
+		name = &v
+	}
+	var desc *string
+	if cCtx.Args().Len() >= 2 {
+		v := cCtx.Args().Get(1)
+		desc = &v
+	}
+	// read optionns
+	var avatarFn *string
+	if s := cCtx.String("avatar"); s != "" {
+		avatarFn = &s
+	}
+	var bannerFn *string
+	if s := cCtx.String("banner"); s != "" {
+		bannerFn = &s
+	}
+
+	if name == nil && desc == nil && avatarFn == nil && bannerFn == nil {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
@@ -63,13 +84,10 @@ func doUpdateProfile(cCtx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
-	name := cCtx.Args().Get(0)
-	desc := cCtx.Args().Get(1)
 
 	var avatar *lexutil.Blob
-	avatarFn := cCtx.String("avatar")
-	if avatarFn != "" {
-		b, err := os.ReadFile(avatarFn)
+	if avatarFn != nil {
+		b, err := os.ReadFile(*avatarFn)
 		if err != nil {
 			return fmt.Errorf("cannot read image file: %w", err)
 		}
@@ -83,9 +101,8 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		}
 	}
 	var banner *lexutil.Blob
-	bannerFn := cCtx.String("banner")
-	if bannerFn != "" {
-		b, err := os.ReadFile(bannerFn)
+	if bannerFn != nil {
+		b, err := os.ReadFile(*bannerFn)
 		if err != nil {
 			return fmt.Errorf("cannot read image file: %w", err)
 		}
@@ -100,8 +117,8 @@ func doUpdateProfile(cCtx *cli.Context) error {
 	}
 
 	_, err = bsky.ActorUpdateProfile(context.TODO(), xrpcc, &bsky.ActorUpdateProfile_Input{
-		Description: &desc,
-		DisplayName: &name,
+		Description: desc,
+		DisplayName: name,
 		Avatar:      avatar,
 		Banner:      banner,
 	})
