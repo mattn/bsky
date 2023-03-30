@@ -524,7 +524,7 @@ func doStream(cCtx *cli.Context) error {
 	}()
 
 	err = events.HandleRepoStream(ctx, con, &events.RepoStreamCallbacks{
-		Append: func(evt *events.RepoAppend) error {
+		RepoAppend: func(evt *events.RepoAppend) error {
 			if cCtx.Bool("json") {
 				json.NewEncoder(os.Stdout).Encode(evt)
 			} else {
