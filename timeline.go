@@ -46,9 +46,9 @@ func doThread(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot get post thread: %w", err)
 	}
 
-	replies := resp.Thread.FeedGetPostThread_ThreadViewPost.Replies
+	replies := resp.Thread.FeedDefs_ThreadViewPost.Replies
 	if cCtx.Bool("json") {
-		json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedGetPostThread_ThreadViewPost.Post)
+		json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedDefs_ThreadViewPost.Post)
 		for _, p := range replies {
 			json.NewEncoder(os.Stdout).Encode(p)
 		}
@@ -58,9 +58,9 @@ func doThread(cCtx *cli.Context) error {
 	for i := 0; i < len(replies)/2; i++ {
 		replies[i], replies[len(replies)-i-1] = replies[len(replies)-i-1], replies[i]
 	}
-	printPost(resp.Thread.FeedGetPostThread_ThreadViewPost.Post)
+	printPost(resp.Thread.FeedDefs_ThreadViewPost.Post)
 	for _, r := range replies {
-		printPost(r.FeedGetPostThread_ThreadViewPost.Post)
+		printPost(r.FeedDefs_ThreadViewPost.Post)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func doTimeline(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	var feed []*bsky.FeedFeedViewPost
+	var feed []*bsky.FeedDefs_FeedViewPost
 
 	n := cCtx.Int64("n")
 	handle := cCtx.String("handle")
@@ -98,8 +98,7 @@ func doTimeline(cCtx *cli.Context) error {
 				cursor = ""
 			}
 		} else {
-			handle = "reverse-chronological"
-			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, handle, cursor, n)
+			resp, err := bsky.FeedGetTimeline(context.TODO(), xrpcc, "reverse-chronological", cursor, n)
 			if err != nil {
 				return fmt.Errorf("cannot get timeline: %w", err)
 			}
@@ -161,7 +160,7 @@ func doDelete(cCtx *cli.Context) error {
 		schema := parts[len(parts)-2]
 
 		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
-			Did:        xrpcc.Auth.Did,
+			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
 			Rkey:       rkey,
 		})
@@ -259,15 +258,16 @@ func doPost(cCtx *cli.Context) error {
 			if err != nil {
 				return fmt.Errorf("cannot read image file: %w", err)
 			}
-			resp, err := comatproto.BlobUpload(context.TODO(), xrpcc, bytes.NewReader(b))
+			resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
 			if err != nil {
 				return fmt.Errorf("cannot upload image file: %w", err)
 			}
 			images = append(images, &bsky.EmbedImages_Image{
 				Alt: filepath.Base(fn),
-				Image: &lexutil.Blob{
-					Cid:      resp.Cid,
+				Image: &lexutil.LexBlob{
+					Ref:      resp.Blob.Ref,
 					MimeType: http.DetectContentType(b),
+					Size:     resp.Blob.Size,
 				},
 			})
 		}
@@ -280,8 +280,8 @@ func doPost(cCtx *cli.Context) error {
 
 	resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 		Collection: "app.bsky.feed.post",
-		Did:        xrpcc.Auth.Did,
-		Record: lexutil.LexiconTypeDecoder{
+		Repo:       xrpcc.Auth.Did,
+		Record: &lexutil.LexiconTypeDecoder{
 			Val: post,
 		},
 	})
@@ -315,29 +315,27 @@ func doVote(cCtx *cli.Context) error {
 		collection := parts[len(parts)-2]
 		did := parts[2]
 
-		dir := "up"
-		if cCtx.Bool("down") {
-			dir = "down"
-		}
-
 		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
 		if err != nil {
 			return fmt.Errorf("getting record: %w", err)
 		}
 
-		voteResp, err := bsky.FeedSetVote(context.TODO(), xrpcc, &bsky.FeedSetVote_Input{
-			Subject:   &comatproto.RepoStrongRef{Uri: resp.Uri, Cid: *resp.Cid},
-			Direction: dir,
+		voteResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+			LexiconTypeID: "com.atproto.feed.like",
+			Collection:    "com.atproto.feed.like",
+			Repo:          did,
+			Record: &lexutil.LexiconTypeDecoder{
+				Val: &bsky.FeedLike{
+					CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),
+					Subject:   &comatproto.RepoStrongRef{Uri: resp.Uri, Cid: *resp.Cid},
+				},
+			},
 		})
+
 		if err != nil {
 			return fmt.Errorf("cannot create vote: %w", err)
 		}
-		if voteResp.Downvote != nil {
-			fmt.Println(*voteResp.Downvote)
-		}
-		if voteResp.Upvote != nil {
-			fmt.Println(*voteResp.Upvote)
-		}
+		fmt.Println(voteResp.Uri)
 	}
 
 	return nil
@@ -370,24 +368,20 @@ func doVotes(cCtx *cli.Context) error {
 		return fmt.Errorf("getting record: %w", err)
 	}
 
-	votes, err := bsky.FeedGetVotes(context.TODO(), xrpcc, "", *resp.Cid, "", 50, resp.Uri)
+	votes, err := bsky.FeedGetLikes(context.TODO(), xrpcc, *resp.Cid, "", 50, resp.Uri)
 	if err != nil {
 		return fmt.Errorf("getting votes: %w", err)
 	}
 
 	if cCtx.Bool("json") {
-		for _, v := range votes.Votes {
+		for _, v := range votes.Likes {
 			json.NewEncoder(os.Stdout).Encode(v)
 		}
 		return nil
 	}
 
-	for _, v := range votes.Votes {
-		if v.Direction == "up" {
-			fmt.Print("👍 ")
-		} else {
-			fmt.Print("👎 ")
-		}
+	for _, v := range votes.Likes {
+		fmt.Print("👍 ")
 		color.Set(color.FgHiRed)
 		fmt.Print(v.Actor.Handle)
 		color.Set(color.Reset)
@@ -434,8 +428,8 @@ func doRepost(cCtx *cli.Context) error {
 		}
 		repostResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 			Collection: "app.bsky.feed.repost",
-			Did:        xrpcc.Auth.Did,
-			Record: lexutil.LexiconTypeDecoder{
+			Repo:       xrpcc.Auth.Did,
+			Record: &lexutil.LexiconTypeDecoder{
 				Val: repost,
 			},
 		})
@@ -524,20 +518,43 @@ func doStream(cCtx *cli.Context) error {
 	}()
 
 	err = events.HandleRepoStream(ctx, con, &events.RepoStreamCallbacks{
-		RepoAppend: func(evt *events.RepoAppend) error {
+		RepoCommit: func(evt *comatproto.SyncSubscribeRepos_Commit) error {
 			if cCtx.Bool("json") {
-				json.NewEncoder(os.Stdout).Encode(evt)
+				b, err := json.Marshal(evt)
+				if err != nil {
+					return err
+				}
+				var out map[string]any
+				if err := json.Unmarshal(b, &out); err != nil {
+					return err
+				}
+				out["Blocks"] = fmt.Sprintf("[%d bytes]", len(evt.Blocks))
+
+				b, err = json.Marshal(out)
+				if err != nil {
+					return err
+				}
+				fmt.Println(string(b))
+
 			} else {
-				fmt.Printf("(%d) RepoAppend: %s (%s -> %s)\n", evt.Seq, evt.Repo, stringp(evt.Prev), evt.Commit)
+				pstr := "<nil>"
+				if evt.Prev != nil && evt.Prev.Defined() {
+					pstr = evt.Prev.String()
+				}
+				fmt.Printf("(%d) RepoAppend: %s (%s -> %s)\n", evt.Seq, evt.Repo, pstr, evt.Commit)
 			}
 
 			return nil
 		},
-		Info: func(info *events.InfoFrame) error {
+		RepoInfo: func(info *comatproto.SyncSubscribeRepos_Info) error {
 			if cCtx.Bool("json") {
-				json.NewEncoder(os.Stdout).Encode(info)
+				b, err := json.Marshal(info)
+				if err != nil {
+					return err
+				}
+				fmt.Println(string(b))
 			} else {
-				fmt.Printf("INFO: %s: %s\n", info.Info, info.Message)
+				fmt.Printf("INFO: %s: %v\n", info.Name, info.Message)
 			}
 
 			return nil

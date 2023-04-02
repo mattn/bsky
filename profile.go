@@ -85,43 +85,52 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	var avatar *lexutil.Blob
+	var avatar *lexutil.LexBlob
 	if avatarFn != nil {
 		b, err := os.ReadFile(*avatarFn)
 		if err != nil {
 			return fmt.Errorf("cannot read image file: %w", err)
 		}
-		resp, err := comatproto.BlobUpload(context.TODO(), xrpcc, bytes.NewReader(b))
+
+		resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
 		if err != nil {
 			return fmt.Errorf("cannot upload image file: %w", err)
 		}
-		avatar = &lexutil.Blob{
-			Cid:      resp.Cid,
+		avatar = &lexutil.LexBlob{
+			Ref:      resp.Blob.Ref,
 			MimeType: http.DetectContentType(b),
+			Size:     resp.Blob.Size,
 		}
 	}
-	var banner *lexutil.Blob
+	var banner *lexutil.LexBlob
 	if bannerFn != nil {
 		b, err := os.ReadFile(*bannerFn)
 		if err != nil {
 			return fmt.Errorf("cannot read image file: %w", err)
 		}
-		resp, err := comatproto.BlobUpload(context.TODO(), xrpcc, bytes.NewReader(b))
+		resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
 		if err != nil {
 			return fmt.Errorf("cannot upload image file: %w", err)
 		}
-		banner = &lexutil.Blob{
-			Cid:      resp.Cid,
+		banner = &lexutil.LexBlob{
+			Ref:      resp.Blob.Ref,
 			MimeType: http.DetectContentType(b),
+			Size:     resp.Blob.Size,
 		}
 	}
 
-	_, err = bsky.ActorUpdateProfile(context.TODO(), xrpcc, &bsky.ActorUpdateProfile_Input{
-		Description: desc,
-		DisplayName: name,
-		Avatar:      avatar,
-		Banner:      banner,
+	_, err = comatproto.RepoPutRecord(context.TODO(), xrpcc, &comatproto.RepoPutRecord_Input{
+		Repo:       xrpcc.Auth.Did,
+		Collection: "app.bsky.actor.profile",
+		Rkey:       "self",
+		Record: &lexutil.LexiconTypeDecoder{&bsky.ActorProfile{
+			Description: desc,
+			DisplayName: name,
+			Avatar:      avatar,
+			Banner:      banner,
+		}},
 	})
+
 	if err != nil {
 		return fmt.Errorf("cannot update profile: %w", err)
 	}
@@ -139,24 +148,16 @@ func doFollow(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
-		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-		if err != nil {
-			return fmt.Errorf("cannot get profile: %w", err)
-		}
-
 		follow := bsky.GraphFollow{
 			LexiconTypeID: "app.bsky.graph.follow",
 			CreatedAt:     time.Now().Local().Format(time.RFC3339),
-			Subject: &bsky.ActorRef{
-				DeclarationCid: profile.Declaration.Cid,
-				Did:            profile.Did,
-			},
+			Subject:       arg,
 		}
 
 		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 			Collection: "app.bsky.graph.follow",
-			Did:        xrpcc.Auth.Did,
-			Record: lexutil.LexiconTypeDecoder{
+			Repo:       xrpcc.Auth.Did,
+			Record: &lexutil.LexiconTypeDecoder{
 				Val: &follow,
 			},
 		})
@@ -185,7 +186,7 @@ func doFollows(cCtx *cli.Context) error {
 
 	var cursor string
 	for {
-		follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, cursor, 100, arg)
+		follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, arg, cursor, 100)
 		if err != nil {
 			return fmt.Errorf("getting record: %w", err)
 		}
@@ -230,7 +231,7 @@ func doFollowers(cCtx *cli.Context) error {
 
 	var cursor string
 	for {
-		followers, err := bsky.GraphGetFollowers(context.TODO(), xrpcc, cursor, 100, arg)
+		followers, err := bsky.GraphGetFollowers(context.TODO(), xrpcc, arg, cursor, 100)
 		if err != nil {
 			return fmt.Errorf("getting record: %w", err)
 		}
@@ -288,7 +289,7 @@ func doNotification(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	notifs, err := bsky.NotificationList(context.TODO(), xrpcc, "", 50)
+	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50)
 	if err != nil {
 		return err
 	}
@@ -317,8 +318,8 @@ func doNotification(cCtx *cli.Context) error {
 			fmt.Println(" " + n.Reason + " to " + n.Uri)
 		case *bsky.FeedRepost:
 			fmt.Printf(" reposted %s\n", v.Subject.Uri)
-		case *bsky.FeedVote:
-			fmt.Printf(" voted %v %s\n", v.Direction, v.Subject.Uri)
+		case *bsky.FeedLike:
+			fmt.Printf(" liked %s\n", v.Subject.Uri)
 		case *bsky.GraphFollow:
 			fmt.Println(" followed you")
 		}

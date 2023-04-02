@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func printPost(p *bsky.FeedPost_View) {
+func printPost(p *bsky.FeedDefs_PostView) {
 	rec := p.Record.Val.(*bsky.FeedPost)
 	color.Set(color.FgHiRed)
 	fmt.Print(p.Author.Handle)
@@ -59,17 +59,16 @@ func printPost(p *bsky.FeedPost_View) {
 		fmt.Println(rec.Text)
 	}
 	if p.Embed != nil {
-		if p.Embed.EmbedImages_Presented != nil {
-			for _, i := range p.Embed.EmbedImages_Presented.Images {
+		if p.Embed.EmbedImages_View != nil {
+			for _, i := range p.Embed.EmbedImages_View.Images {
 				fmt.Println(" {" + i.Fullsize + "}")
 			}
 		}
 	}
-	fmt.Printf(" 👍(%d)👎(%d)⚡(%d)↩️ (%d)\n",
-		p.UpvoteCount,
-		p.DownvoteCount,
-		p.RepostCount,
-		p.ReplyCount,
+	fmt.Printf(" 👍(%d)⚡(%d)↩️ (%d)\n",
+		int64p(p.LikeCount),
+		int64p(p.RepostCount),
+		int64p(p.ReplyCount),
 	)
 	if rec.Reply != nil && rec.Reply.Parent != nil {
 		fmt.Print(" > ")
@@ -102,6 +101,13 @@ func timep(s string) time.Time {
 	panic(s)
 }
 
+func int64p(i *int64) int64 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
 func stringp(s *string) string {
 	if s == nil {
 		return ""
@@ -121,7 +127,8 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 	auth, err := cliutil.ReadAuth(filepath.Join(cfg.dir, cfg.Handle+".auth"))
 	if err == nil {
 		xrpcc.Auth = auth
-		refresh, err2 := comatproto.SessionRefresh(context.TODO(), xrpcc)
+		xrpcc.Auth.AccessJwt = xrpcc.Auth.RefreshJwt
+		refresh, err2 := comatproto.ServerRefreshSession(context.TODO(), xrpcc)
 		if err2 != nil {
 			err = err2
 		} else {
@@ -138,7 +145,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 		}
 	}
 	if err != nil {
-		auth, err := comatproto.SessionCreate(context.TODO(), xrpcc, &comatproto.SessionCreate_Input{
+		auth, err := comatproto.ServerCreateSession(context.TODO(), xrpcc, &comatproto.ServerCreateSession_Input{
 			Identifier: &xrpcc.Auth.Handle,
 			Password:   cfg.Password,
 		})
@@ -149,7 +156,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 		xrpcc.Auth.AccessJwt = auth.AccessJwt
 		xrpcc.Auth.RefreshJwt = auth.RefreshJwt
 
-		b, err := json.Marshal(xrpcc.Auth)
+		b, err := json.MarshalIndent(xrpcc.Auth, "", "  ")
 		if err == nil {
 			if err := os.WriteFile(filepath.Join(cfg.dir, cfg.Handle+".auth"), b, 0600); err != nil {
 				return nil, fmt.Errorf("cannot write auth file: %w", err)
