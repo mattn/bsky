@@ -3,7 +3,7 @@ module github.com/mattn/bsky
 go 1.20
 
 require (
-	github.com/bluesky-social/indigo v0.0.0-20230401211724-34d20b221bd2
+	github.com/bluesky-social/indigo v0.0.0-20230402165318-56d29448c031
 	github.com/fatih/color v1.15.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/urfave/cli/v2 v2.25.1
@@ -93,4 +93,4 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-replace github.com/bluesky-social/indigo => /home/mattn/dev/indigo
+//replace github.com/bluesky-social/indigo => /home/mattn/dev/indigo
