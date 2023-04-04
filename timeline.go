@@ -497,15 +497,8 @@ func doStream(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT)
-
-	go func() {
-		<-ch
-		cancel()
-	}()
 
 	d := websocket.DefaultDialer
 	con, _, err := d.Dial(cCtx.Args().First(), http.Header{})
@@ -517,6 +510,15 @@ func doStream(cCtx *cli.Context) error {
 		_ = con.Close()
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		<-ch
+		cancel()
+		con.Close()
+	}()
+
+	enc := json.NewEncoder(os.Stdout)
 	err = events.HandleRepoStream(ctx, con, &events.RepoStreamCallbacks{
 		RepoCommit: func(evt *comatproto.SyncSubscribeRepos_Commit) error {
 			if cCtx.Bool("json") {
@@ -528,14 +530,7 @@ func doStream(cCtx *cli.Context) error {
 				if err := json.Unmarshal(b, &out); err != nil {
 					return err
 				}
-				out["Blocks"] = fmt.Sprintf("[%d bytes]", len(evt.Blocks))
-
-				b, err = json.Marshal(out)
-				if err != nil {
-					return err
-				}
-				fmt.Println(string(b))
-
+				enc.Encode(out)
 			} else {
 				pstr := "<nil>"
 				if evt.Prev != nil && evt.Prev.Defined() {
@@ -548,11 +543,7 @@ func doStream(cCtx *cli.Context) error {
 		},
 		RepoInfo: func(info *comatproto.SyncSubscribeRepos_Info) error {
 			if cCtx.Bool("json") {
-				b, err := json.Marshal(info)
-				if err != nil {
-					return err
-				}
-				fmt.Println(string(b))
+				enc.Encode(info)
 			} else {
 				fmt.Printf("INFO: %s: %v\n", info.Name, info.Message)
 			}
