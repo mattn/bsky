@@ -5,11 +5,26 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
+func configDir() (string, error) {
+	switch runtime.GOOS {
+	case "darwin":
+		dir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(dir, ".config"), nil
+	default:
+		return os.UserConfigDir()
+
+	}
+}
+
 func loadConfig(profile string) (*config, string, error) {
-	dir, err := os.UserConfigDir()
+	dir, err := configDir()
 	if err != nil {
 		return nil, "", err
 	}
