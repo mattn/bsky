@@ -47,8 +47,8 @@ func doShowProfile(cCtx *cli.Context) error {
 	fmt.Printf("Handle: %s\n", profile.Handle)
 	fmt.Printf("DisplayName: %s\n", stringp(profile.DisplayName))
 	fmt.Printf("Description: %s\n", stringp(profile.Description))
-	fmt.Printf("Follows: %d\n", profile.FollowsCount)
-	fmt.Printf("Followers: %d\n", profile.FollowersCount)
+	fmt.Printf("Follows: %d\n", int64p(profile.FollowsCount))
+	fmt.Printf("Followers: %d\n", int64p(profile.FollowersCount))
 	fmt.Printf("Avatar: %s\n", stringp(profile.Avatar))
 	fmt.Printf("Banner: %s\n", stringp(profile.Banner))
 	return nil
