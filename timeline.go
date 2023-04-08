@@ -19,7 +19,9 @@ import (
 	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/bluesky-social/indigo/events"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
+	"github.com/bluesky-social/indigo/repomgr"
 	"github.com/fatih/color"
+	cid "github.com/ipfs/go-cid"
 
 	"github.com/gorilla/websocket"
 	"github.com/urfave/cli/v2"
@@ -519,40 +521,24 @@ func doStream(cCtx *cli.Context) error {
 	}()
 
 	enc := json.NewEncoder(os.Stdout)
-	err = events.HandleRepoStream(ctx, con, &events.RepoStreamCallbacks{
-		RepoCommit: func(evt *comatproto.SyncSubscribeRepos_Commit) error {
-			if cCtx.Bool("json") {
-				b, err := json.Marshal(evt)
-				if err != nil {
-					return err
-				}
-				var out map[string]any
-				if err := json.Unmarshal(b, &out); err != nil {
-					return err
-				}
-				enc.Encode(out)
-			} else {
-				pstr := "<nil>"
-				if evt.Prev != nil && evt.Prev.Defined() {
-					pstr = evt.Prev.String()
-				}
-				fmt.Printf("(%d) RepoAppend: %s (%s -> %s)\n", evt.Seq, evt.Repo, pstr, evt.Commit)
-			}
-
-			return nil
-		},
-		RepoInfo: func(info *comatproto.SyncSubscribeRepos_Info) error {
-			if cCtx.Bool("json") {
-				enc.Encode(info)
-			} else {
-				fmt.Printf("INFO: %s: %v\n", info.Name, info.Message)
-			}
-
-			return nil
-		},
-		Error: func(errf *events.ErrorFrame) error {
-			return fmt.Errorf("error frame: %s: %s", errf.Error, errf.Message)
-		},
+	events.ConsumeRepoStreamLite(ctx, con, func(op repomgr.EventKind, seq int64, path string, did string, rcid *cid.Cid, rec any) error {
+		type Rec struct {
+			Op   repomgr.EventKind `json:"op"`
+			Seq  int64             `json:"seq"`
+			Path string            `json:"path"`
+			Did  string            `json:"did"`
+			Rcid *cid.Cid          `json:"rcid"`
+			Rec  any               `json:"rec"`
+		}
+		enc.Encode(Rec{
+			Op:   op,
+			Seq:  seq,
+			Path: path,
+			Did:  did,
+			Rcid: rcid,
+			Rec:  rec,
+		})
+		return nil
 	})
 
 	return nil

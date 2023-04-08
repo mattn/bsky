@@ -6,6 +6,7 @@ require (
 	github.com/bluesky-social/indigo v0.0.0-20230406010217-6567e300621a
 	github.com/fatih/color v1.15.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/labstack/gommon v0.4.0
 	github.com/urfave/cli/v2 v2.25.1
 )
 
@@ -73,6 +74,8 @@ require (
 	github.com/polydawn/refmt v0.89.1-0.20221221234430-40501e09de1f // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20230331140348-1f892b517e70 // indirect
 	github.com/whyrusleeping/go-did v0.0.0-20230301193428-2146016fc220 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
