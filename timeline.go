@@ -211,11 +211,11 @@ func doPost(cCtx *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("cannot get record: %w", err)
 		}
-		reply = &bsky.FeedPost_ReplyRef{
-			LexiconTypeID: resp.LexiconTypeID,
-			Parent:        &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
-		}
 		post := resp.Value.Val.(*bsky.FeedPost)
+		reply = &bsky.FeedPost_ReplyRef{
+			Root:   post.Reply.Root,
+			Parent: &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
+		}
 		if post.Reply != nil && post.Reply.Root != nil {
 			reply.Root = &comatproto.RepoStrongRef{Cid: post.Reply.Root.Cid, Uri: post.Reply.Root.Uri}
 		} else {
@@ -323,9 +323,8 @@ func doVote(cCtx *cli.Context) error {
 		}
 
 		voteResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-			LexiconTypeID: "com.atproto.feed.like",
-			Collection:    "com.atproto.feed.like",
-			Repo:          did,
+			Collection: "com.atproto.feed.like",
+			Repo:       did,
 			Record: &lexutil.LexiconTypeDecoder{
 				Val: &bsky.FeedLike{
 					CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),

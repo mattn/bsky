@@ -3,10 +3,10 @@ module github.com/mattn/bsky
 go 1.20
 
 require (
-	github.com/bluesky-social/indigo v0.0.0-20230406010217-6567e300621a
+	github.com/bluesky-social/indigo v0.0.0-20230409032906-5fc31fb5514e
 	github.com/fatih/color v1.15.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/labstack/gommon v0.4.0
+	github.com/ipfs/go-cid v0.4.1
 	github.com/urfave/cli/v2 v2.25.1
 )
 
@@ -25,7 +25,6 @@ require (
 	github.com/ipfs/go-block-format v0.1.2 // indirect
 	github.com/ipfs/go-blockservice v0.5.1 // indirect
 	github.com/ipfs/go-car v0.0.4 // indirect
-	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
 	github.com/ipfs/go-ipfs-blockstore v1.3.0 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
@@ -74,8 +73,6 @@ require (
 	github.com/polydawn/refmt v0.89.1-0.20221221234430-40501e09de1f // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20230331140348-1f892b517e70 // indirect
 	github.com/whyrusleeping/go-did v0.0.0-20230301193428-2146016fc220 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
@@ -84,7 +81,7 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
