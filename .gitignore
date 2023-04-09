@@ -2,3 +2,4 @@ bsky
 bsky.exe
 .dedup
 tmp
+*.sh
