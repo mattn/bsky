@@ -207,13 +207,13 @@ func doPost(cCtx *cli.Context) error {
 		collection := parts[len(parts)-2]
 		did := parts[2]
 
-		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
 		if err != nil {
 			return fmt.Errorf("cannot get record: %w", err)
 		}
 		post := resp.Value.Val.(*bsky.FeedPost)
 		reply = &bsky.FeedPost_ReplyRef{
-			Root:   post.Reply.Root,
+			Root:   &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
 			Parent: &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
 		}
 		if post.Reply != nil && post.Reply.Root != nil {
@@ -317,14 +317,14 @@ func doVote(cCtx *cli.Context) error {
 		collection := parts[len(parts)-2]
 		did := parts[2]
 
-		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
 		if err != nil {
 			return fmt.Errorf("getting record: %w", err)
 		}
 
 		voteResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-			Collection: "com.atproto.feed.like",
-			Repo:       did,
+			Collection: "app.bsky.feed.like",
+			Repo:       xrpcc.Auth.Did,
 			Record: &lexutil.LexiconTypeDecoder{
 				Val: &bsky.FeedLike{
 					CreatedAt: time.Now().Format("2006-01-02T15:04:05.000Z"),
@@ -364,7 +364,7 @@ func doVotes(cCtx *cli.Context) error {
 	collection := parts[len(parts)-2]
 	did := parts[2]
 
-	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
 	if err != nil {
 		return fmt.Errorf("getting record: %w", err)
 	}
@@ -415,7 +415,7 @@ func doRepost(cCtx *cli.Context) error {
 		collection := parts[len(parts)-2]
 		did := parts[2]
 
-		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
 		if err != nil {
 			return fmt.Errorf("getting record: %w", err)
 		}
@@ -465,7 +465,7 @@ func doReposts(cCtx *cli.Context) error {
 	collection := parts[len(parts)-2]
 	did := parts[2]
 
-	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, rkey, did)
+	resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
 	if err != nil {
 		return fmt.Errorf("getting record: %w", err)
 	}
