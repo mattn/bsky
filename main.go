@@ -96,6 +96,7 @@ func main() {
 				UsageText:   "bsky post [text]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "r"},
+					&cli.StringFlag{Name: "q"},
 					&cli.BoolFlag{Name: "stdin"},
 					&cli.StringSliceFlag{Name: "image", Aliases: []string{"i"}},
 				},

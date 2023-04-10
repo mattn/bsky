@@ -211,13 +211,13 @@ func doPost(cCtx *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("cannot get record: %w", err)
 		}
-		post := resp.Value.Val.(*bsky.FeedPost)
+		orig := resp.Value.Val.(*bsky.FeedPost)
 		reply = &bsky.FeedPost_ReplyRef{
 			Root:   &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
 			Parent: &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
 		}
-		if post.Reply != nil && post.Reply.Root != nil {
-			reply.Root = &comatproto.RepoStrongRef{Cid: post.Reply.Root.Cid, Uri: post.Reply.Root.Uri}
+		if orig.Reply != nil && orig.Reply.Root != nil {
+			reply.Root = &comatproto.RepoStrongRef{Cid: orig.Reply.Root.Cid, Uri: orig.Reply.Root.Uri}
 		} else {
 			reply.Root = &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri}
 		}
@@ -227,6 +227,31 @@ func doPost(cCtx *cli.Context) error {
 		Text:      text,
 		CreatedAt: time.Now().Local().Format(time.RFC3339),
 		Reply:     reply,
+	}
+
+	// quote
+	quoteTo := cCtx.String("q")
+	if quoteTo != "" {
+		parts := strings.Split(quoteTo, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", replyTo)
+		}
+		rkey := parts[len(parts)-1]
+		collection := parts[len(parts)-2]
+		did := parts[2]
+
+		resp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
+		if err != nil {
+			return fmt.Errorf("cannot get record: %w", err)
+		}
+
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
+		post.Embed.EmbedRecord = &bsky.EmbedRecord{
+			//LexiconTypeID: "app.bsky.feed.post",
+			Record: &comatproto.RepoStrongRef{Cid: *resp.Cid, Uri: resp.Uri},
+		}
 	}
 
 	for _, entry := range extractLinks(text) {
@@ -273,10 +298,11 @@ func doPost(cCtx *cli.Context) error {
 				},
 			})
 		}
-		post.Embed = &bsky.FeedPost_Embed{
-			EmbedImages: &bsky.EmbedImages{
-				Images: images,
-			},
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
+		post.Embed.EmbedImages = &bsky.EmbedImages{
+			Images: images,
 		}
 	}
 
