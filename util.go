@@ -146,7 +146,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 	}
 	if err != nil {
 		auth, err := comatproto.ServerCreateSession(context.TODO(), xrpcc, &comatproto.ServerCreateSession_Input{
-			Identifier: &xrpcc.Auth.Handle,
+			Identifier: xrpcc.Auth.Handle,
 			Password:   cfg.Password,
 		})
 		if err != nil {

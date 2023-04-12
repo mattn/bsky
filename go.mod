@@ -3,7 +3,7 @@ module github.com/mattn/bsky
 go 1.20
 
 require (
-	github.com/bluesky-social/indigo v0.0.0-20230409032906-5fc31fb5514e
+	github.com/bluesky-social/indigo v0.0.0-20230412180934-62ac17d84098
 	github.com/fatih/color v1.15.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/ipfs/go-cid v0.4.1
@@ -40,7 +40,7 @@ require (
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-verifcid v0.0.2 // indirect
 	github.com/ipld/go-car v0.6.0 // indirect
-	github.com/ipld/go-car/v2 v2.9.0 // indirect
+	github.com/ipld/go-car/v2 v2.10.0 // indirect
 	github.com/ipld/go-codec-dagpb v1.6.0 // indirect
 	github.com/ipld/go-ipld-prime v0.20.0 // indirect
 	github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 // indirect
@@ -70,9 +70,11 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/petar/GoLLRB v0.0.0-20210522233825-ae3b015fd3e9 // indirect
 	github.com/polydawn/refmt v0.89.1-0.20221221234430-40501e09de1f // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/whyrusleeping/cbor v0.0.0-20171005072247-63513f603b11 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20230331140348-1f892b517e70 // indirect
 	github.com/whyrusleeping/go-did v0.0.0-20230301193428-2146016fc220 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
@@ -88,8 +90,8 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gorm.io/driver/postgres v1.5.0 // indirect
-	gorm.io/driver/sqlite v1.4.4 // indirect
-	gorm.io/gorm v1.24.7-0.20230306060331-85eaf9eeda11 // indirect
+	gorm.io/driver/sqlite v1.5.0 // indirect
+	gorm.io/gorm v1.25.0 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
