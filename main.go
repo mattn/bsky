@@ -55,6 +55,16 @@ func main() {
 				Action: doUpdateProfile,
 			},
 			{
+				Name:        "show-session",
+				Description: "Show session",
+				Usage:       "Show session",
+				UsageText:   "bsky show-session",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				Action: doShowSession,
+			},
+			{
 				Name:        "timeline",
 				Description: "Show timeline",
 				Usage:       "Show timeline",

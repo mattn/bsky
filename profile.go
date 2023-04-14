@@ -331,3 +331,25 @@ func doNotification(cCtx *cli.Context) error {
 
 	return nil
 }
+
+func doShowSession(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	session, err := comatproto.ServerGetSession(context.TODO(), xrpcc)
+	if err != nil {
+		return err
+	}
+
+	if cCtx.Bool("json") {
+		json.NewEncoder(os.Stdout).Encode(session)
+		return nil
+	}
+
+	fmt.Printf("Did: %s\n", session.Did)
+	fmt.Printf("Email: %s\n", stringp(session.Email))
+	fmt.Printf("Handle: %s\n", session.Handle)
+	return nil
+}
