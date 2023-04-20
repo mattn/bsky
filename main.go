@@ -219,6 +219,18 @@ func main() {
 				HelpName: "notification",
 				Action:   doNotification,
 			},
+			{
+				Name:        "invite-codes",
+				Description: "Show invite codes",
+				Usage:       "Show invite codes",
+				UsageText:   "bsky invite-codes",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "used", Usage: "show used codes too"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "invite-codes",
+				Action:   doInviteCodes,
+			},
 		},
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {

@@ -353,3 +353,36 @@ func doShowSession(cCtx *cli.Context) error {
 	fmt.Printf("Handle: %s\n", session.Handle)
 	return nil
 }
+
+func doInviteCodes(cCtx *cli.Context) error {
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	includeUsed := cCtx.Bool("used")
+
+	codes, err := comatproto.ServerGetAccountInviteCodes(context.TODO(), xrpcc, false, includeUsed)
+	if err != nil {
+		return err
+	}
+
+	if cCtx.Bool("json") {
+		for _, c := range codes.Codes {
+			json.NewEncoder(os.Stdout).Encode(c)
+		}
+		return nil
+	}
+
+	for _, c := range codes.Codes {
+		if int64(len(c.Uses)) >= c.Available { // used
+			color.Set(color.FgHiBlack)
+			fmt.Printf("%s (used)\n", c.Code)
+			color.Set(color.Reset)
+		} else {
+			fmt.Println(c.Code)
+		}
+	}
+
+	return nil
+}
