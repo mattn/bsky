@@ -289,7 +289,7 @@ func doNotification(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50)
+	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, "")
 	if err != nil {
 		return err
 	}

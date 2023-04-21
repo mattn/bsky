@@ -12,6 +12,8 @@ github.com/bluesky-social/indigo v0.0.0-20230416030206-073d04c9101f h1:YRh5DO8sh
 github.com/bluesky-social/indigo v0.0.0-20230416030206-073d04c9101f/go.mod h1:KKLoceL6dmgIdbnNMfJWfoea8iETgkTfwX+nr+xQb3w=
 github.com/bluesky-social/indigo v0.0.0-20230418225919-0ea3242f9f46 h1:E6Vi7BFPOGxw1fgMXeOnGAcEPh6PQq6OXmNOjr2YOnQ=
 github.com/bluesky-social/indigo v0.0.0-20230418225919-0ea3242f9f46/go.mod h1:KKLoceL6dmgIdbnNMfJWfoea8iETgkTfwX+nr+xQb3w=
+github.com/bluesky-social/indigo v0.0.0-20230420190923-22c94f068789 h1:H7j7Dgo5ac0BoeCFr/LVumfap2eKgDZhQuBirSh5Uc4=
+github.com/bluesky-social/indigo v0.0.0-20230420190923-22c94f068789/go.mod h1:KKLoceL6dmgIdbnNMfJWfoea8iETgkTfwX+nr+xQb3w=
 github.com/btcsuite/btcd v0.0.0-20190213025234-306aecffea32/go.mod h1:DrZx5ec/dmnfpw9KyYoQyYo7d0KEvTkk/5M/vbZjAr8=
 github.com/btcsuite/btcd v0.0.0-20190523000118-16327141da8c/go.mod h1:3J08xEfcugPacsc34/LKRU2yO7YmuT8yt28J8k2+rrI=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f/go.mod h1:TdznJufoqS23FtqVCzL0ZqgP5MqXbb4fg/WgDys70nA=
@@ -497,6 +499,8 @@ golang.org/x/exp v0.0.0-20230321023759-10a507213a29 h1:ooxPy7fPvB4kwsA2h+iBNHkAb
 golang.org/x/exp v0.0.0-20230321023759-10a507213a29/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/exp v0.0.0-20230418202329-0354be287a23 h1:4NKENAGIctmZYLK9W+X1kDK8ObBFqOSCJM6WE7CvkJY=
 golang.org/x/exp v0.0.0-20230418202329-0354be287a23/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/exp v0.0.0-20230420155640-133eef4313cb h1:rhjz/8Mbfa8xROFiH+MQphmAmgqRM0bOMnytznhWEXk=
+golang.org/x/exp v0.0.0-20230420155640-133eef4313cb/go.mod h1:V1LtkGg67GoY2N1AnLN78QLrzxkLyJw7RJb1gzOOz9w=
 golang.org/x/lint v0.0.0-20190930215403-16217165b5de/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
 golang.org/x/mod v0.0.0-20190513183733-4bf6d317e70e/go.mod h1:mXi4GBBbnImb6dmsKGUJ2LatrhH/nqhxcFungHvyanc=
 golang.org/x/mod v0.2.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=

@@ -231,6 +231,33 @@ func main() {
 				HelpName: "invite-codes",
 				Action:   doInviteCodes,
 			},
+			{
+				Name:        "list-app-passwords",
+				Description: "Show App-passwords",
+				Usage:       "Show App-passwords",
+				UsageText:   "bsky list-app-passwords",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "list-app-passwords",
+				Action:   doListAppPasswords,
+			},
+			{
+				Name:        "add-app-password",
+				Description: "Add App-password",
+				Usage:       "Add App-password",
+				UsageText:   "bsky add-app-password",
+				HelpName:    "add-app-password",
+				Action:      doAddAppPassword,
+			},
+			{
+				Name:        "revoke-app-password",
+				Description: "Revoke App-password",
+				Usage:       "Revoke App-password",
+				UsageText:   "bsky revoke-app-password",
+				HelpName:    "revoke-app-password",
+				Action:      doRevokeAppPassword,
+			},
 		},
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {
