@@ -266,13 +266,17 @@ func doPost(cCtx *cli.Context) error {
 	}
 
 	for _, entry := range extractMentions(text) {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, entry.text)
+		if err != nil {
+			return err
+		}
 		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
 			Index: &bsky.FeedPost_TextSlice{
 				Start: entry.start,
 				End:   entry.end,
 			},
 			Type:  "mention",
-			Value: entry.text,
+			Value: profile.Did,
 		})
 	}
 
