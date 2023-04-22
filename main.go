@@ -19,6 +19,7 @@ type config struct {
 	Password string `json:"password"`
 	dir      string
 	verbose  bool
+	prefix   string
 }
 
 func main() {
@@ -272,6 +273,9 @@ func main() {
 			}
 			cCtx.App.Metadata["config"] = cfg
 			cfg.verbose = cCtx.Bool("V")
+			if profile != "" {
+				cfg.prefix = profile + "-"
+			}
 			return nil
 		},
 	}

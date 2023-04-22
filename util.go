@@ -124,7 +124,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 		Auth:   &xrpc.AuthInfo{Handle: cfg.Handle},
 	}
 
-	auth, err := cliutil.ReadAuth(filepath.Join(cfg.dir, cfg.Handle+".auth"))
+	auth, err := cliutil.ReadAuth(filepath.Join(cfg.dir, cfg.prefix+cfg.Handle+".auth"))
 	if err == nil {
 		xrpcc.Auth = auth
 		xrpcc.Auth.AccessJwt = xrpcc.Auth.RefreshJwt
@@ -138,7 +138,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 
 			b, err := json.Marshal(xrpcc.Auth)
 			if err == nil {
-				if err := os.WriteFile(filepath.Join(cfg.dir, cfg.Handle+".auth"), b, 0600); err != nil {
+				if err := os.WriteFile(filepath.Join(cfg.dir, cfg.prefix+cfg.Handle+".auth"), b, 0600); err != nil {
 					return nil, fmt.Errorf("cannot write auth file: %w", err)
 				}
 			}
@@ -158,7 +158,7 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 
 		b, err := json.MarshalIndent(xrpcc.Auth, "", "  ")
 		if err == nil {
-			if err := os.WriteFile(filepath.Join(cfg.dir, cfg.Handle+".auth"), b, 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(cfg.dir, cfg.prefix+cfg.Handle+".auth"), b, 0600); err != nil {
 				return nil, fmt.Errorf("cannot write auth file: %w", err)
 			}
 		}
