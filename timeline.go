@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"syscall"
@@ -20,6 +23,7 @@ import (
 	"github.com/bluesky-social/indigo/events"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/repomgr"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
 	cid "github.com/ipfs/go-cid"
 
@@ -524,15 +528,41 @@ func doReposts(cCtx *cli.Context) error {
 }
 
 func doStream(cCtx *cli.Context) error {
-	if !cCtx.Args().Present() {
-		return cli.ShowSubcommandHelp(cCtx)
+	var host string
+	if cCtx.Args().Present() {
+		host = cCtx.Args().First()
+	} else {
+		cfg := cCtx.App.Metadata["config"].(*config)
+		u, err := url.Parse(cfg.Host)
+		if err != nil {
+			return err
+		}
+		u.Scheme = "wss"
+		u.Path = "/xrpc/com.atproto.sync.subscribeRepos"
+		host = u.String()
+	}
+	pattern := cCtx.String("pattern")
+	reply := cCtx.String("reply")
+
+	var xrpcc *xrpc.Client
+	var re *regexp.Regexp
+	if pattern != "" {
+		var err error
+		re, err = regexp.Compile(pattern)
+		if err != nil {
+			return err
+		}
+		xrpcc, err = makeXRPCC(cCtx)
+		if err != nil {
+			return fmt.Errorf("cannot create client: %w", err)
+		}
 	}
 
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT)
 
 	d := websocket.DefaultDialer
-	con, _, err := d.Dial(cCtx.Args().First(), http.Header{})
+	con, _, err := d.Dial(host, http.Header{})
 	if err != nil {
 		return fmt.Errorf("dial failure: %w", err)
 	}
@@ -559,6 +589,14 @@ func doStream(cCtx *cli.Context) error {
 			Rcid *cid.Cid          `json:"rcid"`
 			Rec  any               `json:"rec"`
 		}
+		var orig *bsky.FeedPost
+		if re != nil {
+			var ok bool
+			orig, ok = rec.(*bsky.FeedPost)
+			if !ok || !re.MatchString(orig.Text) {
+				return nil
+			}
+		}
 		enc.Encode(Rec{
 			Op:   op,
 			Seq:  seq,
@@ -567,6 +605,40 @@ func doStream(cCtx *cli.Context) error {
 			Rcid: rcid,
 			Rec:  rec,
 		})
+		if orig != nil && reply != "" {
+			parts := strings.Split(path, "/")
+			getResp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", parts[0], did, parts[1])
+			if err != nil {
+				return fmt.Errorf("cannot get record: %w", err)
+			}
+
+			orig := getResp.Value.Val.(*bsky.FeedPost)
+			replyTo := &bsky.FeedPost_ReplyRef{
+				Root:   &comatproto.RepoStrongRef{Cid: *getResp.Cid, Uri: getResp.Uri},
+				Parent: &comatproto.RepoStrongRef{Cid: *getResp.Cid, Uri: getResp.Uri},
+			}
+			if orig.Reply != nil && orig.Reply.Root != nil {
+				replyTo.Root = &comatproto.RepoStrongRef{Cid: orig.Reply.Root.Cid, Uri: orig.Reply.Root.Uri}
+			} else {
+				replyTo.Root = &comatproto.RepoStrongRef{Cid: *getResp.Cid, Uri: getResp.Uri}
+			}
+			post := &bsky.FeedPost{
+				Text:      reply,
+				CreatedAt: time.Now().Local().Format(time.RFC3339),
+				Reply:     replyTo,
+			}
+
+			resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+				Collection: "app.bsky.feed.post",
+				Repo:       xrpcc.Auth.Did,
+				Record: &lexutil.LexiconTypeDecoder{
+					Val: post,
+				},
+			})
+			if err != nil {
+				log.Println(err, resp.Uri)
+			}
+		}
 		return nil
 	})
 
