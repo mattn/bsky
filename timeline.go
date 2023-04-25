@@ -54,7 +54,7 @@ func doThread(cCtx *cli.Context) error {
 
 	replies := resp.Thread.FeedDefs_ThreadViewPost.Replies
 	if cCtx.Bool("json") {
-		json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedDefs_ThreadViewPost.Post)
+		json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedDefs_ThreadViewPost)
 		for _, p := range replies {
 			json.NewEncoder(os.Stdout).Encode(p)
 		}
