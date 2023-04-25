@@ -9,7 +9,7 @@ import (
 
 const name = "bsky"
 
-const version = "0.0.30"
+const version = "0.0.31"
 
 var revision = "HEAD"
 
