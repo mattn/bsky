@@ -376,7 +376,7 @@ func doInviteCodes(cCtx *cli.Context) error {
 
 	for _, c := range codes.Codes {
 		if int64(len(c.Uses)) >= c.Available { // used
-			color.Set(color.FgHiBlack)
+			color.Set(color.FgHiMagenta)
 			fmt.Printf("%s (used)\n", c.Code)
 			color.Set(color.Reset)
 		} else {
