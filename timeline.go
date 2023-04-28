@@ -23,7 +23,6 @@ import (
 	"github.com/bluesky-social/indigo/events"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/repomgr"
-	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
 	cid "github.com/ipfs/go-cid"
 
@@ -544,17 +543,12 @@ func doStream(cCtx *cli.Context) error {
 	pattern := cCtx.String("pattern")
 	reply := cCtx.String("reply")
 
-	var xrpcc *xrpc.Client
 	var re *regexp.Regexp
 	if pattern != "" {
 		var err error
 		re, err = regexp.Compile(pattern)
 		if err != nil {
 			return err
-		}
-		xrpcc, err = makeXRPCC(cCtx)
-		if err != nil {
-			return fmt.Errorf("cannot create client: %w", err)
 		}
 	}
 
@@ -589,23 +583,49 @@ func doStream(cCtx *cli.Context) error {
 			Rcid *cid.Cid          `json:"rcid"`
 			Rec  any               `json:"rec"`
 		}
-		var orig *bsky.FeedPost
+
+		orig, isPost := rec.(*bsky.FeedPost)
+
 		if re != nil {
-			var ok bool
-			orig, ok = rec.(*bsky.FeedPost)
-			if !ok || !re.MatchString(orig.Text) {
+			if !isPost || !re.MatchString(orig.Text) {
 				return nil
 			}
 		}
-		enc.Encode(Rec{
-			Op:   op,
-			Seq:  seq,
-			Path: path,
-			Did:  did,
-			Rcid: rcid,
-			Rec:  rec,
-		})
+		if cCtx.Bool("json") {
+			enc.Encode(Rec{
+				Op:   op,
+				Seq:  seq,
+				Path: path,
+				Did:  did,
+				Rcid: rcid,
+				Rec:  rec,
+			})
+		} else if isPost {
+			xrpcc, err := makeXRPCC(cCtx)
+			if err != nil {
+				return fmt.Errorf("cannot create client: %w", err)
+			}
+			var post bsky.FeedDefs_PostView
+			if author, err := bsky.ActorGetProfile(context.TODO(), xrpcc, did); err == nil {
+				post.Author = &bsky.ActorDefs_ProfileViewBasic{
+					Avatar:      author.Avatar,
+					Did:         author.Did,
+					DisplayName: author.DisplayName,
+					Handle:      author.Handle,
+					Labels:      author.Labels,
+					Viewer:      author.Viewer,
+				}
+				post.Record = &lexutil.LexiconTypeDecoder{
+					Val: orig,
+				}
+				printPost(&post)
+			}
+		}
 		if orig != nil && reply != "" {
+			xrpcc, err := makeXRPCC(cCtx)
+			if err != nil {
+				return fmt.Errorf("cannot create client: %w", err)
+			}
 			parts := strings.Split(path, "/")
 			getResp, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", parts[0], did, parts[1])
 			if err != nil {
