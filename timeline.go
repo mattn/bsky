@@ -23,9 +23,11 @@ import (
 	"github.com/bluesky-social/indigo/events"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/repomgr"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
 	cid "github.com/ipfs/go-cid"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/websocket"
 	"github.com/urfave/cli/v2"
 )
@@ -176,6 +178,54 @@ func doDelete(cCtx *cli.Context) error {
 	return nil
 }
 
+func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
+	doc, _ := goquery.NewDocument(link)
+	var title string
+	var description string
+	var imgURL string
+	if doc != nil {
+		title = doc.Find(`title`).Text()
+		description, _ = doc.Find(`meta[property="description"]`).Attr("content")
+		imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
+		if title == "" {
+			title, _ = doc.Find(`meta[property="og:title"]`).Attr("content")
+			if title == "" {
+				title = link
+			}
+		}
+		if description == "" {
+			description, _ = doc.Find(`meta[property="og:description"]`).Attr("content")
+			if description == "" {
+				description = link
+			}
+		}
+		post.Embed.EmbedExternal = &bsky.EmbedExternal{
+			External: &bsky.EmbedExternal_External{
+				Description: description,
+				Title:       title,
+				Uri:         link,
+			},
+		}
+	}
+	if imgURL != "" && post.Embed.EmbedExternal != nil {
+		resp, err := http.Get(imgURL)
+		if err == nil {
+			defer resp.Body.Close()
+			b, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+				if err == nil {
+					post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
+						Ref:      resp.Blob.Ref,
+						MimeType: http.DetectContentType(b),
+						Size:     resp.Blob.Size,
+					}
+				}
+			}
+		}
+	}
+}
+
 func doPost(cCtx *cli.Context) error {
 	stdin := cCtx.Bool("stdin")
 	if !stdin && !cCtx.Args().Present() {
@@ -266,6 +316,12 @@ func doPost(cCtx *cli.Context) error {
 			Type:  "link",
 			Value: entry.text,
 		})
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
+		if post.Embed.EmbedExternal == nil {
+			addLink(xrpcc, post, entry.text)
+		}
 	}
 
 	for _, entry := range extractMentions(text) {
