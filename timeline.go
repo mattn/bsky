@@ -341,9 +341,10 @@ func doPost(cCtx *cli.Context) error {
 
 	// embeded images
 	imageFn := cCtx.StringSlice("image")
+	imageAltFn := cCtx.StringSlice("image-alt")
 	if len(imageFn) > 0 {
 		var images []*bsky.EmbedImages_Image
-		for _, fn := range imageFn {
+		for i, fn := range imageFn {
 			b, err := os.ReadFile(fn)
 			if err != nil {
 				return fmt.Errorf("cannot read image file: %w", err)
@@ -352,8 +353,14 @@ func doPost(cCtx *cli.Context) error {
 			if err != nil {
 				return fmt.Errorf("cannot upload image file: %w", err)
 			}
+			var alt string
+			if len(imageAltFn) < i {
+				alt = filepath.Base(fn)
+			} else {
+				alt = imageAltFn[i]
+			}
 			images = append(images, &bsky.EmbedImages_Image{
-				Alt: filepath.Base(fn),
+				Alt: alt,
 				Image: &lexutil.LexBlob{
 					Ref:      resp.Blob.Ref,
 					MimeType: http.DetectContentType(b),
