@@ -168,6 +168,14 @@ func main() {
 				Action:      doFollow,
 			},
 			{
+				Name:        "unfollow",
+				Description: "Unfollow the handle",
+				Usage:       "Unfollow the handle",
+				UsageText:   "bsky follow [handle]",
+				HelpName:    "unfollow",
+				Action:      doUnfollow,
+			},
+			{
 				Name:        "follows",
 				Description: "Show follows",
 				Usage:       "Show follows",

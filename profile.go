@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
@@ -165,6 +166,45 @@ func doFollow(cCtx *cli.Context) error {
 			return err
 		}
 		fmt.Println(resp.Uri)
+	}
+	return nil
+}
+
+func doUnfollow(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	for _, arg := range cCtx.Args().Slice() {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+		if err != nil {
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+
+		if profile.Viewer.Following == nil {
+			continue
+		}
+
+		parts := strings.Split(*profile.Viewer.Following, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		schema := parts[len(parts)-2]
+		fmt.Println(stringp(profile.Viewer.Following))
+		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+			Repo:       xrpcc.Auth.Did,
+			Collection: schema,
+			Rkey:       rkey,
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
