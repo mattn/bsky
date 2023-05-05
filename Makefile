@@ -1,4 +1,7 @@
 BIN := bsky
+ifeq ($(OS),Windows_NT)
+BIN := $(BIN).exe
+endif
 VERSION := $$(make -s show-version)
 CURRENT_REVISION := $(shell git rev-parse --short HEAD)
 BUILD_LDFLAGS := "-s -w -X main.revision=$(CURRENT_REVISION)"
@@ -23,20 +26,12 @@ show-version: $(GOBIN)/gobump
 $(GOBIN)/gobump:
 	go install github.com/x-motemen/gobump/cmd/gobump@latest
 
-.PHONY: cross
-cross: $(GOBIN)/goxz
-	goxz -n $(BIN) -pv=v$(VERSION) -arch=amd64 -build-ldflags=$(BUILD_LDFLAGS) .
-
-$(GOBIN)/goxz:
-	go install github.com/Songmu/goxz/cmd/goxz@latest
-
 .PHONY: test
 test: build
 	go test -v ./...
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) goxz
 	go clean
 
 .PHONY: bump
@@ -52,10 +47,3 @@ endif
 	git tag "v$(VERSION)"
 	git push origin main
 	git push origin "refs/tags/v$(VERSION)"
-
-.PHONY: upload
-upload: $(GOBIN)/ghr
-	ghr "v$(VERSION)" goxz
-
-$(GOBIN)/ghr:
-	go install github.com/tcnksm/ghr@latest
