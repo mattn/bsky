@@ -105,4 +105,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           generate_release_notes: true
-          files: dist-*/*/*/bsky*.*
+          files: dist-*/bsky*.*
