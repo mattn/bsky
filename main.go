@@ -112,6 +112,7 @@ func main() {
 					&cli.StringFlag{Name: "q"},
 					&cli.BoolFlag{Name: "stdin"},
 					&cli.StringSliceFlag{Name: "image", Aliases: []string{"i"}},
+					&cli.StringSliceFlag{Name: "image-alt", Aliases: []string{"ia"}},
 				},
 				HelpName:  "post",
 				ArgsUsage: "[text]",
