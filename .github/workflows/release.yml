@@ -30,17 +30,11 @@ jobs:
         GOOS: linux
         GOARCH: amd64
       run: make build
-    - name: Build amd64 (static)
-      env:
-        CGO_ENABLED: 1
-        GOOS: linux
-        GOARCH: amd64
-      run: make build
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: dist-linux
-        path: build/linux/*/*/bsky*.tar.bz2
+        path: bsky
 
   build_for_macos_amd64:
     name: Build for MacOS (amd64)
@@ -66,14 +60,12 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: dist-darwin-amd64
-        path: build/darwin/*/*/bsky*.tar.bz2
+        path: bsky
 
   build_for_windows:
     name: Build for Windows
     runs-on: windows-latest
     steps:
-    - name: Install build dependencies
-      run: choco install zip
     - name: Checkout
       uses: actions/checkout@v3
       with:
@@ -93,7 +85,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: dist-windows
-        path: build/windows/*/*/bsky*.zip
+        path: bsky.exe
 
   release:
     name: Draft Release
