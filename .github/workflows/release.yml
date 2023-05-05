@@ -36,8 +36,8 @@ jobs:
         name: dist-linux
         path: bsky
 
-  build_for_macos_amd64:
-    name: Build for MacOS (amd64)
+  build_for_macos:
+    name: Build for MacOS
     runs-on: macos-latest
     steps:
     - name: Install build dependencies
@@ -59,7 +59,7 @@ jobs:
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: dist-darwin-amd64
+        name: dist-darwin
         path: bsky
 
   build_for_windows:
