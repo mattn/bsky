@@ -29,12 +29,12 @@ jobs:
         CGO_ENABLED: 1
         GOOS: linux
         GOARCH: amd64
-      run: make build
+      run: make release
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: dist-linux
-        path: bsky
+        path: bsky-linux-*.zip
 
   build_for_macos:
     name: Build for MacOS
@@ -55,17 +55,19 @@ jobs:
         CGO_ENABLED: 1
         GOOS: darwin
         GOARCH: amd64
-      run: make build
+      run: make release
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: dist-darwin
-        path: bsky
+        path: bsky-darwin-*.zip
 
   build_for_windows:
     name: Build for Windows
     runs-on: windows-latest
     steps:
+    - name: Install build dependencies
+      run: choco install zip
     - name: Checkout
       uses: actions/checkout@v3
       with:
@@ -80,12 +82,12 @@ jobs:
         CGO_ENABLED: 1
         GOOS: windows
         GOARCH: amd64
-      run: make build
+      run: make release
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: dist-windows
-        path: bsky.exe
+        path: bsky-windows-*.zip
 
   release:
     name: Draft Release
