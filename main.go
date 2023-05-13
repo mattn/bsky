@@ -172,7 +172,7 @@ func main() {
 				Name:        "unfollow",
 				Description: "Unfollow the handle",
 				Usage:       "Unfollow the handle",
-				UsageText:   "bsky follow [handle]",
+				UsageText:   "bsky unfollow [handle]",
 				HelpName:    "unfollow",
 				Action:      doUnfollow,
 			},
