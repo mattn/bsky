@@ -601,6 +601,10 @@ func doStream(cCtx *cli.Context) error {
 		}
 		u.Scheme = "wss"
 		u.Path = "/xrpc/com.atproto.sync.subscribeRepos"
+		cur := cCtx.String("cursor")
+		if cur != "" {
+			u.RawQuery = "cursor=" + cur
+		}
 		host = u.String()
 	}
 	pattern := cCtx.String("pattern")
