@@ -84,6 +84,7 @@ func main() {
 				Usage:       "Show timeline as stream",
 				UsageText:   "bsky stream",
 				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "cursor", Value: "", Usage: "cursor"},
 					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
 					&cli.StringFlag{Name: "pattern", Usage: "pattern"},
 					&cli.StringFlag{Name: "reply", Usage: "reply"},
