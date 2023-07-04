@@ -149,10 +149,15 @@ func doFollow(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+		if err != nil {
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+
 		follow := bsky.GraphFollow{
 			LexiconTypeID: "app.bsky.graph.follow",
 			CreatedAt:     time.Now().Local().Format(time.RFC3339),
-			Subject:       arg,
+			Subject:       profile.Did,
 		}
 
 		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
@@ -295,6 +300,122 @@ func doFollowers(cCtx *cli.Context) error {
 			break
 		}
 		cursor = *followers.Cursor
+	}
+	return nil
+}
+
+func doBlock(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	for _, arg := range cCtx.Args().Slice() {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+		if err != nil {
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+
+		block := bsky.GraphBlock{
+			LexiconTypeID: "app.bsky.graph.block",
+			CreatedAt:     time.Now().Local().Format(time.RFC3339),
+			Subject:       profile.Did,
+		}
+
+		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+			Collection: "app.bsky.graph.block",
+			Repo:       xrpcc.Auth.Did,
+			Record: &lexutil.LexiconTypeDecoder{
+				Val: &block,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp.Uri)
+	}
+	return nil
+}
+
+func doUnblock(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	for _, arg := range cCtx.Args().Slice() {
+		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+		if err != nil {
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+
+		if profile.Viewer.Blocking == nil {
+			continue
+		}
+
+		parts := strings.Split(*profile.Viewer.Blocking, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		schema := parts[len(parts)-2]
+		fmt.Println(stringp(profile.Viewer.Blocking))
+		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+			Repo:       xrpcc.Auth.Did,
+			Collection: schema,
+			Rkey:       rkey,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func doBlocks(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	var cursor string
+	for {
+		blocks, err := bsky.GraphGetBlocks(context.TODO(), xrpcc, cursor, 100)
+		if err != nil {
+			return fmt.Errorf("getting record: %w", err)
+		}
+
+		if cCtx.Bool("json") {
+			for _, f := range blocks.Blocks {
+				json.NewEncoder(os.Stdout).Encode(f)
+			}
+		} else {
+			for _, f := range blocks.Blocks {
+				color.Set(color.FgHiRed)
+				fmt.Print(f.Handle)
+				color.Set(color.Reset)
+				fmt.Printf(" [%s] ", stringp(f.DisplayName))
+				color.Set(color.FgBlue)
+				fmt.Println(f.Did)
+				color.Set(color.Reset)
+			}
+		}
+		if blocks.Cursor == nil {
+			break
+		}
+		cursor = *blocks.Cursor
 	}
 	return nil
 }
