@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -545,5 +546,94 @@ func doInviteCodes(cCtx *cli.Context) error {
 		}
 	}
 
+	return nil
+}
+
+func doReportUser(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	arg := cCtx.String("handle")
+	if arg == "" {
+		return errors.New("handle must be provided")
+	}
+
+	rt := cCtx.String("type")
+	reason := cCtx.String("reason")
+
+	profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+	if err != nil {
+		return fmt.Errorf("cannot get profile: %w", err)
+	}
+
+	report := comatproto.ModerationCreateReport_Input{
+		Reason:     &reason,
+		ReasonType: &rt,
+		Subject: &comatproto.ModerationCreateReport_Input_Subject{
+			AdminDefs_RepoRef: &comatproto.AdminDefs_RepoRef{
+				Did: profile.Did,
+			},
+		},
+	}
+
+	resp, err := comatproto.ModerationCreateReport(context.TODO(), xrpcc, &report)
+	if err != nil {
+		return fmt.Errorf("cannot create moderation report: %w", err)
+	}
+
+	fmt.Println(resp.Id)
+	return nil
+}
+
+func doReportPost(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	rt := cCtx.String("type")
+	reason := cCtx.String("reason")
+
+	for _, arg := range cCtx.Args().Slice() {
+		parts := strings.Split(arg, "/")
+		if len(parts) < 3 {
+			return fmt.Errorf("invalid post uri: %q", arg)
+		}
+		rkey := parts[len(parts)-1]
+		collection := parts[len(parts)-2]
+		did := parts[2]
+
+		rec, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", collection, did, rkey)
+		if err != nil {
+			return fmt.Errorf("cannot get record: %w", err)
+		}
+		report := comatproto.ModerationCreateReport_Input{
+			Reason:     &reason,
+			ReasonType: &rt,
+			Subject: &comatproto.ModerationCreateReport_Input_Subject{
+				RepoStrongRef: &comatproto.RepoStrongRef{
+					Cid: *rec.Cid,
+					Uri: rec.Uri,
+				},
+			},
+		}
+
+		resp, err := comatproto.ModerationCreateReport(context.TODO(), xrpcc, &report)
+		if err != nil {
+			return fmt.Errorf("cannot create moderation report: %w", err)
+		}
+
+		fmt.Println(resp.Id)
+	}
 	return nil
 }

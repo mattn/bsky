@@ -299,6 +299,31 @@ func main() {
 				HelpName:    "revoke-app-password",
 				Action:      doRevokeAppPassword,
 			},
+			{
+				Name:        "report-user",
+				Description: "Report the handle",
+				Usage:       "Report the handle",
+				UsageText:   "bsky report-user [handle]",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "type", Value: "spam", Usage: "report type"},
+					&cli.StringFlag{Name: "reason", Value: "This user seems to be a spam", Usage: "reason"},
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+				},
+				HelpName: "report-user",
+				Action:   doReportUser,
+			},
+			{
+				Name:        "report-post",
+				Description: "Report the post",
+				Usage:       "Report the post",
+				UsageText:   "bsky report-post [cid]",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "type", Value: "spam", Usage: "report type"},
+					&cli.StringFlag{Name: "reason", Value: "This post seems to be a spam's post", Usage: "reason"},
+				},
+				HelpName: "report-post",
+				Action:   doReportPost,
+			},
 		},
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {
