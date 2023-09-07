@@ -181,11 +181,12 @@ func doDelete(cCtx *cli.Context) error {
 }
 
 func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
-	doc, _ := goquery.NewDocument(link)
+	doc, err := goquery.NewDocument(link)
 	var title string
 	var description string
 	var imgURL string
-	if doc != nil {
+
+	if err == nil {
 		title = doc.Find(`title`).Text()
 		description, _ = doc.Find(`meta[property="description"]`).Attr("content")
 		imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
@@ -206,6 +207,12 @@ func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
 				Description: description,
 				Title:       title,
 				Uri:         link,
+			},
+		}
+	} else {
+		post.Embed.EmbedExternal = &bsky.EmbedExternal{
+			External: &bsky.EmbedExternal_External{
+				Uri: link,
 			},
 		}
 	}
