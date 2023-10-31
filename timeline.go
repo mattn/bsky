@@ -364,9 +364,9 @@ func doPost(cCtx *cli.Context) error {
 			}
 			var alt string
 			if len(imageAltFn) < i {
-				alt = filepath.Base(fn)
-			} else {
 				alt = imageAltFn[i]
+			} else {
+				alt = filepath.Base(fn)
 			}
 			images = append(images, &bsky.EmbedImages_Image{
 				Alt: alt,
