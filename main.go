@@ -9,12 +9,12 @@ import (
 
 const name = "bsky"
 
-const version = "0.0.49"
+const version = "0.0.50"
 
 var revision = "HEAD"
 
 type config struct {
-	Bgs     string `json:"bgs"`
+	Bgs      string `json:"bgs"`
 	Host     string `json:"host"`
 	Handle   string `json:"handle"`
 	Password string `json:"password"`
