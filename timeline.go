@@ -604,7 +604,11 @@ func doStream(cCtx *cli.Context) error {
 		host = cCtx.Args().First()
 	} else {
 		cfg := cCtx.App.Metadata["config"].(*config)
-		u, err := url.Parse(cfg.Host)
+		host := cfg.Bgs
+		if host == "" {
+			host = cfg.Host
+		}
+		u, err := url.Parse(host)
 		if err != nil {
 			return err
 		}

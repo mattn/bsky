@@ -14,6 +14,7 @@ const version = "0.0.49"
 var revision = "HEAD"
 
 type config struct {
+	Bgs     string `json:"bgs"`
 	Host     string `json:"host"`
 	Handle   string `json:"handle"`
 	Password string `json:"password"`
@@ -244,6 +245,7 @@ func main() {
 				UsageText:   "bsky login [handle] [password]",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "host", Value: "https://bsky.social"},
+					&cli.StringFlag{Name: "bgs", Value: "https://bsky.network"},
 				},
 				HelpName: "login",
 				Action:   doLogin,
