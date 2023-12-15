@@ -604,7 +604,7 @@ func doStream(cCtx *cli.Context) error {
 		host = cCtx.Args().First()
 	} else {
 		cfg := cCtx.App.Metadata["config"].(*config)
-		host := cfg.Bgs
+		host = cfg.Bgs
 		if host == "" {
 			host = cfg.Host
 		}
@@ -635,8 +635,7 @@ func doStream(cCtx *cli.Context) error {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT)
 
-	d := websocket.DefaultDialer
-	con, _, err := d.Dial(host, http.Header{})
+	con, _, err := websocket.DefaultDialer.Dial(host, http.Header{})
 	if err != nil {
 		return fmt.Errorf("dial failure: %w", err)
 	}
