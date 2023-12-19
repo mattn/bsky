@@ -34,6 +34,19 @@ func extractLinks(text string) []entry {
 	return result
 }
 
+func extractLinksBytes(text string) []entry {
+	var result []entry
+	matches := urlRe.FindAllStringSubmatchIndex(text, -1)
+	for _, m := range matches {
+		result = append(result, entry{
+			text:  text[m[0]:m[1]],
+			start: int64(len(text[0:m[0]])),
+			end:   int64(len(text[0:m[1]]))},
+		)
+	}
+	return result
+}
+
 func extractMentions(text string) []entry {
 	var result []entry
 	matches := mentionRe.FindAllStringSubmatchIndex(text, -1)
@@ -42,6 +55,19 @@ func extractMentions(text string) []entry {
 			text:  strings.TrimPrefix(text[m[0]:m[1]], "@"),
 			start: int64(len([]rune(text[0:m[0]]))),
 			end:   int64(len([]rune(text[0:m[1]])))},
+		)
+	}
+	return result
+}
+
+func extractMentionsBytes(text string) []entry {
+	var result []entry
+	matches := mentionRe.FindAllStringSubmatchIndex(text, -1)
+	for _, m := range matches {
+		result = append(result, entry{
+			text:  strings.TrimPrefix(text[m[0]:m[1]], "@"),
+			start: int64(len(text[0:m[0]])),
+			end:   int64(len(text[0:m[1]]))},
 		)
 	}
 	return result

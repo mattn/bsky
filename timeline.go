@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -220,7 +220,7 @@ func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
 		resp, err := http.Get(imgURL)
 		if err == nil {
 			defer resp.Body.Close()
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			if err == nil {
 				resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
 				if err == nil {
@@ -242,7 +242,7 @@ func doPost(cCtx *cli.Context) error {
 	}
 	text := strings.Join(cCtx.Args().Slice(), " ")
 	if stdin {
-		b, err := ioutil.ReadAll(os.Stdin)
+		b, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -316,14 +316,19 @@ func doPost(cCtx *cli.Context) error {
 		}
 	}
 
-	for _, entry := range extractLinks(text) {
-		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
-			Index: &bsky.FeedPost_TextSlice{
-				Start: entry.start,
-				End:   entry.end,
+	for _, entry := range extractLinksBytes(text) {
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Link: &bsky.RichtextFacet_Link{
+						Uri: entry.text,
+					},
+				},
 			},
-			Type:  "link",
-			Value: entry.text,
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: entry.start,
+				ByteEnd:   entry.end,
+			},
 		})
 		if post.Embed == nil {
 			post.Embed = &bsky.FeedPost_Embed{}
@@ -333,18 +338,23 @@ func doPost(cCtx *cli.Context) error {
 		}
 	}
 
-	for _, entry := range extractMentions(text) {
+	for _, entry := range extractMentionsBytes(text) {
 		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, entry.text)
 		if err != nil {
 			return err
 		}
-		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
-			Index: &bsky.FeedPost_TextSlice{
-				Start: entry.start,
-				End:   entry.end,
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Mention: &bsky.RichtextFacet_Mention{
+						Did: profile.Did,
+					},
+				},
 			},
-			Type:  "mention",
-			Value: profile.Did,
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: entry.start,
+				ByteEnd:   entry.end,
+			},
 		})
 	}
 
