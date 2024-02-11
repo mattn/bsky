@@ -239,6 +239,18 @@ func main() {
 				Action:      doDelete,
 			},
 			{
+				Name:        "search",
+				Description: "Search Bluesky",
+				Usage:       "Search Bluesky",
+				UsageText:   "bsky search [terms]",
+				HelpName:    "search",
+				Action:      doSearch,
+				Flags: []cli.Flag{
+					&cli.IntFlag{Name: "n", Value: 100, Usage: "number of items"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+			},
+			{
 				Name:        "login",
 				Description: "Login the social",
 				Usage:       "Login the social",

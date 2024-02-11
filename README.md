@@ -21,6 +21,7 @@ COMMANDS:
    show-profile    show profile
    update-profile  update profile
    timeline, tl    show timeline
+   search          search posts
    thread          show thread
    post            post new text
    vote            vote the post
