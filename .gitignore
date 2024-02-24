@@ -3,3 +3,4 @@ bsky.exe
 .dedup
 tmp
 *.sh
+.DS_Store
