@@ -67,7 +67,7 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		v := cCtx.Args().Get(1)
 		desc = &v
 	}
-	// read optionns
+	// read options
 	var avatarFn *string
 	if s := cCtx.String("avatar"); s != "" {
 		avatarFn = &s
@@ -86,7 +86,28 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
+	currentProfile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, xrpcc.Auth.Handle)
+	if err != nil {
+		return fmt.Errorf("cannot get profile: %w", err)
+	}
+	if name == nil {
+		name = currentProfile.DisplayName
+	}
+	if desc == nil {
+		desc = currentProfile.Description
+	}
+
 	var avatar *lexutil.LexBlob
+	if currentProfile.Avatar != nil {
+		currentAvatarCid, currentAvatarType, err := ParseCid(currentProfile.Avatar)
+		if err != nil {
+			return fmt.Errorf("cannot parse avatar cid: %w", err)
+		}
+		avatar = &lexutil.LexBlob{
+			Ref:      lexutil.LexLink(currentAvatarCid),
+			MimeType: currentAvatarType,
+		}
+	}
 	if avatarFn != nil {
 		b, err := os.ReadFile(*avatarFn)
 		if err != nil {
@@ -103,7 +124,19 @@ func doUpdateProfile(cCtx *cli.Context) error {
 			Size:     resp.Blob.Size,
 		}
 	}
+
 	var banner *lexutil.LexBlob
+	if currentProfile.Banner != nil {
+		currentBannerCid, currentBannerType, err := ParseCid(currentProfile.Banner)
+		if err != nil {
+			return fmt.Errorf("cannot parse banner cid: %w", err)
+		}
+		banner = &lexutil.LexBlob{
+			Ref:      lexutil.LexLink(currentBannerCid),
+			MimeType: currentBannerType,
+		}
+	}
+
 	if bannerFn != nil {
 		b, err := os.ReadFile(*bannerFn)
 		if err != nil {
@@ -119,17 +152,24 @@ func doUpdateProfile(cCtx *cli.Context) error {
 			Size:     resp.Blob.Size,
 		}
 	}
+	currentRecord, err := comatproto.RepoGetRecord(context.TODO(), xrpcc, "", "app.bsky.actor.profile", xrpcc.Auth.Did, "self")
+	if err != nil {
+		return fmt.Errorf("cannot get profile: %w", err)
+	}
+
+	updatedRecord := &lexutil.LexiconTypeDecoder{Val: &bsky.ActorProfile{
+		Description: desc,
+		DisplayName: name,
+		Avatar:      avatar,
+		Banner:      banner,
+	}}
 
 	_, err = comatproto.RepoPutRecord(context.TODO(), xrpcc, &comatproto.RepoPutRecord_Input{
 		Repo:       xrpcc.Auth.Did,
 		Collection: "app.bsky.actor.profile",
 		Rkey:       "self",
-		Record: &lexutil.LexiconTypeDecoder{&bsky.ActorProfile{
-			Description: desc,
-			DisplayName: name,
-			Avatar:      avatar,
-			Banner:      banner,
-		}},
+		Record:     updatedRecord,
+		SwapRecord: currentRecord.Cid,
 	})
 
 	if err != nil {
