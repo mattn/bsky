@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
@@ -14,6 +17,7 @@ import (
 	cliutil "github.com/bluesky-social/indigo/util/cliutil"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
+	cidDecode "github.com/ipfs/go-cid"
 
 	"github.com/urfave/cli/v2"
 )
@@ -165,4 +169,37 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 	}
 
 	return xrpcc, nil
+}
+
+var avatarOrBannerUrlRegex = regexp.MustCompile(`^https://cdn\.bsky\.app/img/(avatar|banner)/plain/did:plc:[a-z0-9]+/[a-z0-9]+@+[a-z]+$`)
+
+func ParseCid(cidUrl *string) (cidDecode.Cid, string, error) {
+	if cidUrl == nil {
+		return cidDecode.Cid{}, "", fmt.Errorf("URL is not provided")
+	}
+
+	if !avatarOrBannerUrlRegex.MatchString(*cidUrl) {
+		return cidDecode.Cid{}, "", fmt.Errorf("URL does not match expected format")
+	}
+
+	parsedCidUrl, err := url.Parse(*cidUrl)
+	if err != nil {
+		return cidDecode.Cid{}, "", fmt.Errorf("failed to parse URL: %w", err)
+	}
+
+	pathSegments := strings.Split(parsedCidUrl.Path, "/")
+	cid := pathSegments[len(pathSegments)-1]
+
+	cidParts := strings.Split(cid, "@")
+	if len(cidParts) < 2 {
+		return cidDecode.Cid{}, "", fmt.Errorf("CID does not contain image type")
+	}
+
+	cid, imageType := cidParts[0], cidParts[1]
+	decodedCid, err := cidDecode.Decode(cid)
+	if err != nil {
+		return cidDecode.Cid{}, "", fmt.Errorf("failed to decode CID: %w", err)
+	}
+
+	return decodedCid, "image/" + imageType, nil
 }
