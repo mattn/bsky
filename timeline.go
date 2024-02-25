@@ -218,7 +218,7 @@ func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
 	}
 	if imgURL != "" && post.Embed.EmbedExternal != nil {
 		resp, err := http.Get(imgURL)
-		if err == nil {
+		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
 			b, err := io.ReadAll(resp.Body)
 			if err == nil {
