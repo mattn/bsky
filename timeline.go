@@ -358,6 +358,22 @@ func doPost(cCtx *cli.Context) error {
 		})
 	}
 
+	for _, entry := range extractTagsBytes(text) {
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Tag: &bsky.RichtextFacet_Tag{
+						Tag: entry.text,
+					},
+				},
+			},
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: entry.start,
+				ByteEnd:   entry.end,
+			},
+		})
+	}
+
 	// embeded images
 	imageFn := cCtx.StringSlice("image")
 	imageAltFn := cCtx.StringSlice("image-alt")
