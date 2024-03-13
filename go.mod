@@ -6,7 +6,7 @@ toolchain go1.21.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
-	github.com/bluesky-social/indigo v0.0.0-20240208004502-c72ce2340db3
+	github.com/bluesky-social/indigo v0.0.0-20240228193119-0f7714848b28
 	github.com/fatih/color v1.16.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/ipfs/go-cid v0.4.1
@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/RussellLuo/slidingwindow v0.0.0-20200528002341-535bb99d338b // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/carlmjohnson/versioninfo v0.22.5 // indirect
