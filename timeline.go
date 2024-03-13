@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -28,9 +29,11 @@ import (
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
 	cid "github.com/ipfs/go-cid"
+	"golang.org/x/net/html/charset"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/websocket"
+	encoding "github.com/mattn/go-encoding"
 	"github.com/urfave/cli/v2"
 )
 
@@ -181,53 +184,73 @@ func doDelete(cCtx *cli.Context) error {
 }
 
 func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
-	doc, err := goquery.NewDocument(link)
-	var title string
-	var description string
-	var imgURL string
+	res, _ := http.Get(link)
+	if res != nil {
+		defer res.Body.Close()
 
-	if err == nil {
-		title = doc.Find(`title`).Text()
-		description, _ = doc.Find(`meta[property="description"]`).Attr("content")
-		imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
-		if title == "" {
-			title, _ = doc.Find(`meta[property="og:title"]`).Attr("content")
+		br := bufio.NewReader(res.Body)
+		var reader io.Reader = br
+
+		data, err2 := br.Peek(1024)
+		if err2 == nil {
+			enc, name, _ := charset.DetermineEncoding(data, res.Header.Get("content-type"))
+			if enc != nil {
+				reader = enc.NewDecoder().Reader(br)
+			} else if len(name) > 0 {
+				enc := encoding.GetEncoding(name)
+				if enc != nil {
+					reader = enc.NewDecoder().Reader(br)
+				}
+			}
+		}
+
+		var title string
+		var description string
+		var imgURL string
+		doc, err := goquery.NewDocumentFromReader(reader)
+		if err == nil {
+			title = doc.Find(`title`).Text()
+			description, _ = doc.Find(`meta[property="description"]`).Attr("content")
+			imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
 			if title == "" {
-				title = link
+				title, _ = doc.Find(`meta[property="og:title"]`).Attr("content")
+				if title == "" {
+					title = link
+				}
 			}
-		}
-		if description == "" {
-			description, _ = doc.Find(`meta[property="og:description"]`).Attr("content")
 			if description == "" {
-				description = link
+				description, _ = doc.Find(`meta[property="og:description"]`).Attr("content")
+				if description == "" {
+					description = link
+				}
+			}
+			post.Embed.EmbedExternal = &bsky.EmbedExternal{
+				External: &bsky.EmbedExternal_External{
+					Description: description,
+					Title:       title,
+					Uri:         link,
+				},
+			}
+		} else {
+			post.Embed.EmbedExternal = &bsky.EmbedExternal{
+				External: &bsky.EmbedExternal_External{
+					Uri: link,
+				},
 			}
 		}
-		post.Embed.EmbedExternal = &bsky.EmbedExternal{
-			External: &bsky.EmbedExternal_External{
-				Description: description,
-				Title:       title,
-				Uri:         link,
-			},
-		}
-	} else {
-		post.Embed.EmbedExternal = &bsky.EmbedExternal{
-			External: &bsky.EmbedExternal_External{
-				Uri: link,
-			},
-		}
-	}
-	if imgURL != "" && post.Embed.EmbedExternal != nil {
-		resp, err := http.Get(imgURL)
-		if err == nil && resp.StatusCode == http.StatusOK {
-			defer resp.Body.Close()
-			b, err := io.ReadAll(resp.Body)
-			if err == nil {
-				resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+		if imgURL != "" && post.Embed.EmbedExternal != nil {
+			resp, err := http.Get(imgURL)
+			if err == nil && resp.StatusCode == http.StatusOK {
+				defer resp.Body.Close()
+				b, err := io.ReadAll(resp.Body)
 				if err == nil {
-					post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
-						Ref:      resp.Blob.Ref,
-						MimeType: http.DetectContentType(b),
-						Size:     resp.Blob.Size,
+					resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+					if err == nil {
+						post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
+							Ref:      resp.Blob.Ref,
+							MimeType: http.DetectContentType(b),
+							Size:     resp.Blob.Size,
+						}
 					}
 				}
 			}
