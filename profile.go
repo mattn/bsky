@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -464,6 +463,7 @@ func doLogin(cCtx *cli.Context) error {
 	fp, _ := cCtx.App.Metadata["path"].(string)
 	var cfg config
 	cfg.Host = cCtx.String("host")
+	cfg.Bgs = cCtx.String("bgs")
 	cfg.Handle = cCtx.Args().Get(0)
 	cfg.Password = cCtx.Args().Get(1)
 	if cfg.Handle == "" || cfg.Password == "" {
@@ -473,7 +473,7 @@ func doLogin(cCtx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("cannot make config file: %w", err)
 	}
-	err = ioutil.WriteFile(fp, b, 0644)
+	err = os.WriteFile(fp, b, 0644)
 	if err != nil {
 		return fmt.Errorf("cannot write config file: %w", err)
 	}
