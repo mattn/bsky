@@ -33,6 +33,7 @@ func main() {
 			&cli.StringFlag{Name: "a", Usage: "profile name"},
 			&cli.BoolFlag{Name: "V", Usage: "verbose"},
 		},
+		DisableSliceFlagSeparator: true,
 		Commands: []*cli.Command{
 			{
 				Name:        "show-profile",
