@@ -31,7 +31,7 @@ func doSearch(cCtx *cli.Context) error {
 	var cursor string
 
 	for {
-		resp, err := bsky.FeedSearchPosts(context.TODO(), xrpcc, cursor, 100, terms)
+		resp, err := bsky.FeedSearchPosts(context.TODO(), xrpcc, "", cursor, "", "", 100, "", terms, "", "", nil, "", "")
 		if err != nil {
 			return fmt.Errorf("cannot perform search: %w", err)
 		}
