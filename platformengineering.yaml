@@ -1,5 +1,0 @@
-apiVersion: v1alpha1
-kind: FollowsList
-accounts:
-  - handle: kelseyhightower.com
-  - handle: bgrant0607.bsky.social
