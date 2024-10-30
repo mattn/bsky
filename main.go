@@ -170,6 +170,9 @@ func main() {
 				UsageText:   "bsky follow [handle]",
 				HelpName:    "follow",
 				Action:      doFollow,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "file", Aliases: []string{"f"}, Value: "", Usage: "-f Path to a YAML file containing a FollowList of accounts to follow."},
+				},
 			},
 			{
 				Name:        "unfollow",

@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
 	"strings"
@@ -178,7 +180,26 @@ func doUpdateProfile(cCtx *cli.Context) error {
 }
 
 func doFollow(cCtx *cli.Context) error {
-	if !cCtx.Args().Present() {
+	handles := cCtx.Args().Slice()
+	// Check if a file path is provided
+	if filePath := cCtx.String("file"); filePath != "" {
+
+		fContents, err := os.ReadFile(filePath)
+		if err != nil {
+			return errors.Wrapf(err, "cannot read file %s", filePath)
+		}
+
+		list := &FollowList{}
+		if err := yaml.Unmarshal(fContents, &list); err != nil {
+			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
+		}
+
+		for _, a := range list.Accounts {
+			handles = append(handles, a.Handle)
+		}
+	}
+
+	if len(handles) == 0 {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
@@ -187,7 +208,7 @@ func doFollow(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	for _, arg := range cCtx.Args().Slice() {
+	for _, arg := range handles {
 		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
 		if err != nil {
 			return fmt.Errorf("cannot get profile: %w", err)
