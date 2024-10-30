@@ -10,6 +10,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/ipfs/go-cid v0.4.1
+	github.com/maxence-charriere/go-app/v9 v9.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.27.2
 	gopkg.in/yaml.v3 v3.0.1

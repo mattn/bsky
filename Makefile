@@ -16,6 +16,12 @@ all: clean build
 build:
 	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) .
 
+.PHONY: pwa
+pwa:
+	GOOS=js GOARCH=wasm go build -o web/app.wasm ./pwa
+	go build -o .build/pwa-server ./pwa
+
+
 .PHONY: release
 release:
 	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) .

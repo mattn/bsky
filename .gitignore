@@ -5,3 +5,5 @@ tmp
 *.sh
 .DS_Store
 .idea/**
+**/*.wasm
+**/.build
