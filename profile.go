@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -183,12 +185,29 @@ func doFollow(cCtx *cli.Context) error {
 	handles := cCtx.Args().Slice()
 	// Check if a file path is provided
 	if filePath := cCtx.String("file"); filePath != "" {
+		var fContents []byte
+		var err error
 
-		fContents, err := os.ReadFile(filePath)
-		if err != nil {
-			return errors.Wrapf(err, "cannot read file %s", filePath)
+		// Support reading YAML files directly from git.
+		if strings.HasPrefix(filePath, "http://") || strings.HasPrefix(filePath, "https://") {
+			// Handle URL
+			resp, err := http.Get(filePath)
+			if err != nil {
+				return errors.Wrapf(err, "cannot fetch URL %s", filePath)
+			}
+			defer resp.Body.Close()
+
+			fContents, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return errors.Wrapf(err, "cannot read response body from URL %s", filePath)
+			}
+		} else {
+			// Handle local file
+			fContents, err = os.ReadFile(filePath)
+			if err != nil {
+				return errors.Wrapf(err, "cannot read file %s", filePath)
+			}
 		}
-
 		list := &FollowList{}
 		if err := yaml.Unmarshal(fContents, &list); err != nil {
 			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
@@ -211,6 +230,13 @@ func doFollow(cCtx *cli.Context) error {
 	for _, arg := range handles {
 		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
 		if err != nil {
+			var xErr *xrpc.Error
+			if errors.As(err, &xErr) {
+				if 400 == xErr.StatusCode {
+					fmt.Printf("Profile not found for handle: %s\n", arg)
+					continue
+				}
+			}
 			return fmt.Errorf("cannot get profile: %w", err)
 		}
 
