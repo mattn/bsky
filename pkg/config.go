@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"encoding/json"
@@ -8,6 +8,16 @@ import (
 	"runtime"
 	"strings"
 )
+
+type config struct {
+	Bgs      string `json:"bgs"`
+	Host     string `json:"host"`
+	Handle   string `json:"handle"`
+	Password string `json:"password"`
+	dir      string
+	verbose  bool
+	prefix   string
+}
 
 func configDir() (string, error) {
 	switch runtime.GOOS {
@@ -23,7 +33,7 @@ func configDir() (string, error) {
 	}
 }
 
-func loadConfig(profile string) (*config, string, error) {
+func LoadConfig(profile string) (*config, string, error) {
 	dir, err := configDir()
 	if err != nil {
 		return nil, "", err

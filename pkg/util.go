@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"context"
@@ -105,21 +105,21 @@ func timep(s string) time.Time {
 	panic(s)
 }
 
-func int64p(i *int64) int64 {
+func Int64p(i *int64) int64 {
 	if i == nil {
 		return 0
 	}
 	return *i
 }
 
-func stringp(s *string) string {
+func Stringp(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
 }
 
-func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
+func MakeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 	cfg := cCtx.App.Metadata["config"].(*config)
 
 	xrpcc := &xrpc.Client{

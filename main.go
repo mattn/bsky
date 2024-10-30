@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/mattn/bsky/pkg"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -12,16 +13,6 @@ const name = "bsky"
 const version = "0.0.61"
 
 var revision = "HEAD"
-
-type config struct {
-	Bgs      string `json:"bgs"`
-	Host     string `json:"host"`
-	Handle   string `json:"handle"`
-	Password string `json:"password"`
-	dir      string
-	verbose  bool
-	prefix   string
-}
 
 func main() {
 	app := &cli.App{
@@ -321,7 +312,7 @@ func main() {
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {
 			profile := cCtx.String("a")
-			cfg, fp, err := loadConfig(profile)
+			cfg, fp, err := pkg.loadConfig(profile)
 			cCtx.App.Metadata["path"] = fp
 			if cCtx.Args().Get(0) == "login" {
 				return nil

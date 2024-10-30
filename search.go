@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/mattn/bsky/pkg"
 	"os"
 	"sort"
 	"strings"
@@ -17,7 +18,7 @@ func doSearch(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.makeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -50,8 +51,8 @@ func doSearch(cCtx *cli.Context) error {
 	}
 
 	sort.Slice(results, func(i, j int) bool {
-		ri := timep(results[i].Record.Val.(*bsky.FeedPost).CreatedAt)
-		rj := timep(results[j].Record.Val.(*bsky.FeedPost).CreatedAt)
+		ri := pkg.timep(results[i].Record.Val.(*bsky.FeedPost).CreatedAt)
+		rj := pkg.timep(results[j].Record.Val.(*bsky.FeedPost).CreatedAt)
 		return ri.Before(rj)
 	})
 	if int64(len(results)) > n {
@@ -64,7 +65,7 @@ func doSearch(cCtx *cli.Context) error {
 		}
 	} else {
 		for _, p := range results {
-			printPost(p)
+			pkg.printPost(p)
 		}
 	}
 
