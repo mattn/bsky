@@ -29,6 +29,16 @@ type CommandApp struct {
 
 func (a *CommandApp) Render() app.UI {
 	return app.Div().Body(
+		// New top toolbar
+		app.Div().
+			Style("background-color", "#1DA1F2"). // Twitter blue color
+			Style("color", "white").
+			Style("padding", "10px").
+			Style("font-size", "18px").
+			Style("font-weight", "bold").
+			Style("text-align", "center").
+			Text("bsctl: Bluesky Web CLI"),
+
 		// Display area for previous commands
 		app.Div().
 			ID(outputBoxID).
@@ -64,6 +74,68 @@ func (a *CommandApp) Render() app.UI {
 					Style("margin-left", "10px").
 					Style("padding", "10px"),
 			),
+		// Warning box
+		app.Div().
+			Style("border", "2px solid red").
+			Style("color", "red").
+			Style("padding", "10px").
+			Style("margin-top", "20px").
+			Style("text-align", "center").
+			Body(
+				app.Text("Warning: This is a janky POC for distributing CLIs as webapps. For a list of issues check "),
+				app.A().Href("https://github.com/jlewi/bsctl/issues").Text("GitHub."),
+			),
+
+		// Footer bar
+		app.Div().
+			Style("background-color", "#f0f0f0").
+			Style("padding", "10px").
+			Style("margin-top", "20px").
+			Style("display", "flex").
+			Style("justify-content", "space-between").
+			Style("align-items", "center").
+			Body(
+				// Left empty space
+				app.Div(),
+
+				// Center version, commit, and build date information
+				app.Div().
+					Style("text-align", "center").
+					Style("color", "#666").
+					Style("font-size", "12px").
+					Body(
+						app.Div().Text("version: "+pkg.Version),
+						app.Div().Text("commit: "+pkg.Commit),
+						app.Div().Text("buildDate: "+pkg.Date),
+					),
+				// Right-aligned links
+				app.Div().
+					Style("display", "flex").
+					Style("align-items", "center").
+					Body(
+						app.A().
+							Href("https://github.com/jlewi/bsctl").
+							Target("_blank").
+							Style("margin-right", "10px").
+							Body(
+								app.Img().
+									Src("/web/github.svg").
+									Alt("GitHub").
+									Style("width", "24px").
+									Style("height", "24px"),
+							),
+						app.A().
+							Href("https://bsky.app/profile/jeremylewi.bsky.social").
+							Target("_blank").
+							Body(
+								app.Img().
+									Src("/web/bluesky_Logo.svg").
+									Alt("jeremylewi.bsky.social").
+									Style("width", "24px").
+									Style("height", "24px"),
+							),
+					),
+			),
 	)
 }
 
@@ -87,17 +159,6 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 		}
 		err := func() error {
 			switch command {
-			//case "login":
-			//	handle := parts[1]
-			//	password := parts[2]
-			//
-			//	// Store handle and password in local storage
-			//	// TODO(jeremy): Should we use ctx.Set with the persist option?
-			//	ctx.LocalStorage().Set("handle", handle)
-			//	ctx.LocalStorage().Set("password", password)
-			//
-			//	output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
-			//	a.commands = append(a.commands, output)
 			case "config":
 				switch subCommand {
 				case "set":
