@@ -3,6 +3,7 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -73,4 +74,39 @@ func LoadConfig(profile string) (*Config, string, error) {
 	}
 	cfg.dir = dir
 	return &cfg, fp, nil
+}
+
+type ConfigManager interface {
+	LoadConfig() (*Config, error)
+	SaveConfig(*Config) error
+}
+
+type LocalFileConfigManager struct {
+	Path string
+}
+
+func (m *LocalFileConfigManager) LoadConfig() (*Config, error) {
+	b, err := os.ReadFile(m.Path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot load Config file: %s", m.Path)
+	}
+
+	cfg := &Config{}
+	if err := json.Unmarshal(b, cfg); err != nil {
+		return nil, errors.Wrapf(err, "cannot unmarshal Config file: %s", m.Path)
+	}
+	return cfg, nil
+}
+
+func (m *LocalFileConfigManager) SaveConfig(cfg *Config) error {
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return errors.Wrapf(err, "cannot marshal Config")
+	}
+	// TODO(jeremy): Create the directory if it doesn't exist
+	if err := os.WriteFile(m.Path, b, 0600); err != nil {
+		return errors.Wrapf(err, "cannot write Config file: %s", m.Path)
+
+	}
+	return nil
 }
