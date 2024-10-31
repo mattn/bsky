@@ -24,8 +24,8 @@ pwa:
 # Build a static website
 .PHONY: pwa
 static:	
-	GOOS=js GOARCH=wasm go build -o .build/web/app.wasm ./pwa
-	BUILD_STATIC=.build/web go run ./pwa
+	GOOS=js GOARCH=wasm go build -o .build/static/web/app.wasm ./pwa
+	BUILD_STATIC=.build/static go run ./pwa
 
 .PHONY: release
 release:

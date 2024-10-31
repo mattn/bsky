@@ -246,6 +246,8 @@ func main() {
 	app.Route("/", &CommandApp{})
 	log.Info("Registering path", "path", bucketName)
 	app.Route(bucketName, &CommandApp{})
+	log.Info("Registering path", "path", "index.html")
+	app.Route("/index.html", &CommandApp{})
 	app.RunWhenOnBrowser()
 
 	log.Info("Running code path for server")
