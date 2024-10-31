@@ -50,12 +50,12 @@ func doShowProfile(cCtx *cli.Context) error {
 
 	fmt.Printf("Did: %s\n", profile.Did)
 	fmt.Printf("Handle: %s\n", profile.Handle)
-	fmt.Printf("DisplayName: %s\n", pkg.stringp(profile.DisplayName))
-	fmt.Printf("Description: %s\n", pkg.stringp(profile.Description))
-	fmt.Printf("Follows: %d\n", pkg.int64p(profile.FollowsCount))
-	fmt.Printf("Followers: %d\n", pkg.int64p(profile.FollowersCount))
-	fmt.Printf("Avatar: %s\n", pkg.stringp(profile.Avatar))
-	fmt.Printf("Banner: %s\n", pkg.stringp(profile.Banner))
+	fmt.Printf("DisplayName: %s\n", pkg.Stringp(profile.DisplayName))
+	fmt.Printf("Description: %s\n", pkg.Stringp(profile.Description))
+	fmt.Printf("Follows: %d\n", pkg.Int64p(profile.FollowsCount))
+	fmt.Printf("Followers: %d\n", pkg.Int64p(profile.FollowersCount))
+	fmt.Printf("Avatar: %s\n", pkg.Stringp(profile.Avatar))
+	fmt.Printf("Banner: %s\n", pkg.Stringp(profile.Banner))
 	return nil
 }
 
@@ -288,7 +288,7 @@ func doUnfollow(cCtx *cli.Context) error {
 		}
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
-		fmt.Println(pkg.stringp(profile.Viewer.Following))
+		fmt.Println(pkg.Stringp(profile.Viewer.Following))
 		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
@@ -332,7 +332,7 @@ func doFollows(cCtx *cli.Context) error {
 				color.Set(color.FgHiRed)
 				fmt.Print(f.Handle)
 				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", pkg.stringp(f.DisplayName))
+				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
 				color.Set(color.FgBlue)
 				fmt.Println(f.Did)
 				color.Set(color.Reset)
@@ -377,7 +377,7 @@ func doFollowers(cCtx *cli.Context) error {
 				color.Set(color.FgHiRed)
 				fmt.Print(f.Handle)
 				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", pkg.stringp(f.DisplayName))
+				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
 				color.Set(color.FgBlue)
 				fmt.Println(f.Did)
 				color.Set(color.Reset)
@@ -454,7 +454,7 @@ func doUnblock(cCtx *cli.Context) error {
 		}
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
-		fmt.Println(pkg.stringp(profile.Viewer.Blocking))
+		fmt.Println(pkg.Stringp(profile.Viewer.Blocking))
 		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
@@ -493,7 +493,7 @@ func doBlocks(cCtx *cli.Context) error {
 				color.Set(color.FgHiRed)
 				fmt.Print(f.Handle)
 				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", pkg.stringp(f.DisplayName))
+				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
 				color.Set(color.FgBlue)
 				fmt.Println(f.Did)
 				color.Set(color.Reset)
@@ -509,7 +509,7 @@ func doBlocks(cCtx *cli.Context) error {
 
 func doLogin(cCtx *cli.Context) error {
 	fp, _ := cCtx.App.Metadata["path"].(string)
-	var cfg pkg.config
+	var cfg pkg.Config
 	cfg.Host = cCtx.String("host")
 	cfg.Bgs = cCtx.String("bgs")
 	cfg.Handle = cCtx.Args().Get(0)
@@ -519,11 +519,11 @@ func doLogin(cCtx *cli.Context) error {
 	}
 	b, err := json.MarshalIndent(&cfg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("cannot make config file: %w", err)
+		return fmt.Errorf("cannot make Config file: %w", err)
 	}
 	err = os.WriteFile(fp, b, 0644)
 	if err != nil {
-		return fmt.Errorf("cannot write config file: %w", err)
+		return fmt.Errorf("cannot write Config file: %w", err)
 	}
 	return nil
 }
@@ -557,7 +557,7 @@ func doNotification(cCtx *cli.Context) error {
 		color.Set(color.FgHiRed)
 		fmt.Print(n.Author.Handle)
 		color.Set(color.Reset)
-		fmt.Printf(" [%s] ", pkg.stringp(n.Author.DisplayName))
+		fmt.Printf(" [%s] ", pkg.Stringp(n.Author.DisplayName))
 		color.Set(color.FgBlue)
 		fmt.Println(n.Author.Did)
 		color.Set(color.Reset)
@@ -598,7 +598,7 @@ func doShowSession(cCtx *cli.Context) error {
 	}
 
 	fmt.Printf("Did: %s\n", session.Did)
-	fmt.Printf("Email: %s\n", pkg.stringp(session.Email))
+	fmt.Printf("Email: %s\n", pkg.Stringp(session.Email))
 	fmt.Printf("Handle: %s\n", session.Handle)
 	return nil
 }

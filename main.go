@@ -312,18 +312,18 @@ func main() {
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {
 			profile := cCtx.String("a")
-			cfg, fp, err := pkg.loadConfig(profile)
+			cfg, fp, err := pkg.LoadConfig(profile)
 			cCtx.App.Metadata["path"] = fp
 			if cCtx.Args().Get(0) == "login" {
 				return nil
 			}
 			if err != nil {
-				return fmt.Errorf("cannot load config file: %w", err)
+				return fmt.Errorf("cannot load Config file: %w", err)
 			}
-			cCtx.App.Metadata["config"] = cfg
-			cfg.verbose = cCtx.Bool("V")
+			cCtx.App.Metadata["Config"] = cfg
+			cfg.Verbose = cCtx.Bool("V")
 			if profile != "" {
-				cfg.prefix = profile + "-"
+				cfg.Prefix = profile + "-"
 			}
 			return nil
 		},
