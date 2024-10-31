@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/zapr"
 	"github.com/mattn/bsky/pkg"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ type CommandApp struct {
 	app.Compo
 	commands []string
 	input    string
+	manager  *pkg.XRPCManager
 }
 
 func (a *CommandApp) Render() app.UI {
@@ -78,12 +80,15 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 				password := parts[2]
 
 				// Store handle and password in local storage
+				// TODO(jeremy): Should we use ctx.Set with the persist option?
 				ctx.LocalStorage().Set("handle", handle)
 				ctx.LocalStorage().Set("password", password)
 
 				output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
 				a.commands = append(a.commands, output)
 
+			case "follow":
+				return a.handleFollow(ctx)
 			case "follows":
 				output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
 				a.commands = append(a.commands, output)
@@ -143,6 +148,71 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 		a.input = ""
 		a.Update()
 	}
+}
+
+func (a *CommandApp) handleFollow(ctx app.Context) error {
+	m, err := a.getXRPCManager(ctx)
+	if err != nil {
+		return err
+	}
+
+	client, err := m.MakeXRPCC(context.Background())
+	if err != nil {
+		return err
+	}
+
+	parts := strings.Fields(a.input)
+
+	if len(parts) != 2 {
+		output := fmt.Sprintf("Invalid command format. Use: follow <URI")
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	var w strings.Builder
+	if err := pkg.DoFollow(client, parts[1], &w); err != nil {
+		output := fmt.Sprintf("Failed to DoFollows: %+v", err)
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, w.String())
+	a.commands = append(a.commands, output)
+	return nil
+}
+
+func (a *CommandApp) getXRPCManager(ctx app.Context) (*pkg.XRPCManager, error) {
+	if a.manager != nil {
+		return a.manager, nil
+	}
+	log := zapr.NewLogger(zap.L())
+	log.Info("Creating xRPCManager")
+
+	handle := ""
+	if err := ctx.LocalStorage().Get("handle", &handle); err != nil {
+		return nil, errors.Wrapf(err, "failed to get handle from local storage")
+	}
+
+	password := ""
+	if err := ctx.LocalStorage().Get("password", &password); err != nil {
+		return nil, errors.Wrapf(err, "failed to get password from local storage")
+	}
+
+	m := pkg.XRPCManager{
+		AuthManager: &pkg.AuthLocalStorage{
+			Ctx: ctx,
+		},
+		// TODO(jeremy): We should avoid hardcoding this.
+		Config: &pkg.Config{
+			Bgs:      "https://bsky.network",
+			Host:     "https://bsky.social",
+			Handle:   handle,
+			Password: password,
+		},
+	}
+
+	a.manager = &m
+	return &m, nil
 }
 
 // fakeCommandExecution simulates executing a command and returns a response.
