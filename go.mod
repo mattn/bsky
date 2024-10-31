@@ -8,6 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/bluesky-social/indigo v0.0.0-20240503174839-ef8e99bfcc76
 	github.com/fatih/color v1.16.0
+	github.com/go-logr/zapr v1.3.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/ipfs/go-cid v0.4.1
 	github.com/maxence-charriere/go-app/v9 v9.8.0
@@ -106,7 +107,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/net v0.24.0

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/mattn/bsky/pkg"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"time"
@@ -65,24 +69,65 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 		// TODO(jeremy): This seems to add extra quotes and doesn't handle the case where we have spaces in
 		// the password
 		parts := strings.Fields(a.input)
-		if len(parts) >= 3 && parts[0] == "login" {
-			handle := parts[1]
-			password := parts[2]
+		command := parts[0]
 
-			// Store handle and password in local storage
-			ctx.LocalStorage().Set("handle", handle)
-			ctx.LocalStorage().Set("password", password)
+		err := func() error {
+			switch command {
+			case "login":
+				handle := parts[1]
+				password := parts[2]
 
-			output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
-			a.commands = append(a.commands, output)
-		} else {
-			// Original behavior for other commands
-			output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
-			a.commands = append(a.commands, output)
+				// Store handle and password in local storage
+				ctx.LocalStorage().Set("handle", handle)
+				ctx.LocalStorage().Set("password", password)
+
+				output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
+				a.commands = append(a.commands, output)
+
+			case "follows":
+				output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
+				a.commands = append(a.commands, output)
+
+				handle := ""
+				if err := ctx.LocalStorage().Get("handle", &handle); err != nil {
+					return errors.Wrapf(err, "failed to get handle from local storage")
+				}
+
+				password := ""
+				if err := ctx.LocalStorage().Get("password", &password); err != nil {
+					return errors.Wrapf(err, "failed to get password from local storage")
+				}
+
+				m := pkg.XRPCManager{
+					AuthManager: &pkg.AuthLocalStorage{
+						Ctx: ctx,
+					},
+					Config: &pkg.Config{
+						Bgs:      "https://bsky.network",
+						Host:     "https://bsky.social",
+						Handle:   handle,
+						Password: password,
+					},
+				}
+
+				if _, err := m.MakeXRPCC(context.Background()); err != nil {
+					output := fmt.Sprintf("Failed to MakeXRPCC: %+v", err)
+					a.commands = append(a.commands, output)
+				}
+			default:
+				// Original behavior for other commands
+				output := fmt.Sprintf("Unrecognized command %s", command)
+				a.commands = append(a.commands, output)
+			}
+			return nil
+		}()
+
+		if err != nil {
+			a.commands = append(a.commands, fmt.Sprintf("Error: %+v", err))
 		}
 
-		output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
-		a.commands = append(a.commands, output)
+		//output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
+		//a.commands = append(a.commands, output)
 		a.input = ""
 		a.Update()
 	}
@@ -95,6 +140,16 @@ func fakeCommandExecution(command string) string {
 }
 
 func main() {
+	// We need to configure a logger so that messages will be logged to the console.
+	c := zap.NewDevelopmentConfig()
+	c.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	newLogger, err := c.Build()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to initialize zap logger; error %v", err))
+	}
+
+	zap.ReplaceGlobals(newLogger)
+
 	// Register the root component.
 	app.Route("/", &CommandApp{})
 	app.RunWhenOnBrowser()
