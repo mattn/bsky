@@ -102,6 +102,7 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 					AuthManager: &pkg.AuthLocalStorage{
 						Ctx: ctx,
 					},
+					// TODO(jeremy): We should avoid hardcoding this.
 					Config: &pkg.Config{
 						Bgs:      "https://bsky.network",
 						Host:     "https://bsky.social",
@@ -110,10 +111,21 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 					},
 				}
 
-				if _, err := m.MakeXRPCC(context.Background()); err != nil {
+				client, err := m.MakeXRPCC(context.Background())
+				if err != nil {
 					output := fmt.Sprintf("Failed to MakeXRPCC: %+v", err)
 					a.commands = append(a.commands, output)
 				}
+				var w strings.Builder
+				if err := pkg.DoFollows(client, handle, &w); err != nil {
+					output := fmt.Sprintf("Failed to DoFollows: %+v", err)
+					a.commands = append(a.commands, output)
+					return nil
+				}
+
+				output = fmt.Sprintf("Command: %s\nOutput: %s", a.input, w.String())
+				a.commands = append(a.commands, output)
+				return nil
 			default:
 				// Original behavior for other commands
 				output := fmt.Sprintf("Unrecognized command %s", command)
