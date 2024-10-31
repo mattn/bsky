@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bluesky-social/indigo/xrpc"
-	"github.com/mattn/bsky/pkg"
+	"github.com/jlewi/bsctl/pkg"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io"

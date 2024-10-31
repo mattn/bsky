@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mattn/bsky/pkg"
+	"github.com/jlewi/bsctl/pkg"
 	"os"
 	"sort"
 	"strings"

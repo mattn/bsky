@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-logr/zapr"
-	"github.com/mattn/bsky/pkg"
+	"github.com/jlewi/bsctl/pkg"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

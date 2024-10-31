@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/mattn/bsky/pkg"
+	"github.com/jlewi/bsctl/pkg"
 	"os"
 
 	"github.com/urfave/cli/v2"

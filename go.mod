@@ -1,4 +1,4 @@
-module github.com/mattn/bsky
+module github.com/jlewi/bsctl
 
 go 1.22
 

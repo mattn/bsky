@@ -14,10 +14,10 @@ GIT_SHA_SHORT := $(shell git rev-parse --short HEAD)
 DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION := $(shell git describe --tags)-$(GIT_SHA_SHORT)
 LDFLAGS := -s -w \
-        -X 'github.com/mattn/bsky/pkg.Date=$(DATE)' \
-        -X 'github.com/mattn/bsky/pkg.Version=$(subst v,,$(VERSION))' \
-        -X 'github.com/mattn/bsky/pkg.Commit=$(GIT_SHA)' \
-		-X 'github.com/mattn/bsky/pkg.BuiltBy=$(GIT_SHA)'
+        -X 'github.com/jlewi/bsctl/pkg.Date=$(DATE)' \
+        -X 'github.com/jlewi/bsctl/pkg.Version=$(subst v,,$(VERSION))' \
+        -X 'github.com/jlewi/bsctl/pkg.Commit=$(GIT_SHA)' \
+		-X 'github.com/jlewi/bsctl/pkg.BuiltBy=$(GIT_SHA)'
 
 .PHONY: all
 all: clean build
