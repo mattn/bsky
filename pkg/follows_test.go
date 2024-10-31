@@ -2,11 +2,56 @@ package pkg
 
 import (
 	"context"
+	"github.com/bluesky-social/indigo/xrpc"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+type TestStuff struct {
+	Manager *XRPCManager
+	Client  *xrpc.Client
+}
+
+func testSetup() (*TestStuff, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to get user home directory")
+	}
+
+	configPath := filepath.Join(homeDir, ".config/bsky/config.json")
+
+	cManager := &LocalFileConfigManager{
+		Path: configPath,
+	}
+
+	config, err := cManager.LoadConfig()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to Load configuration")
+	}
+
+	auth := &AuthLocalFile{
+		Path: filepath.Join(homeDir, ".config/bsky/jeremylewi.bsky.social.auth"),
+	}
+
+	m := &XRPCManager{
+		AuthManager: auth,
+		Config:      config,
+	}
+
+	client, err := m.MakeXRPCC(context.Background())
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to make XRPC client")
+	}
+
+	return &TestStuff{
+		Manager: m,
+		Client:  client,
+	}, nil
+}
 
 func Test_Follows(t *testing.T) {
 	if os.Getenv("GITHUB_ACTIONS") != "" {
