@@ -48,7 +48,6 @@ func DoFollows(client *xrpc.Client, handle string, w io.Writer) error {
 }
 
 func DoFollow(client *xrpc.Client, filePath string, w io.Writer) error {
-
 	var fContents []byte
 	var err error
 

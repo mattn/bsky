@@ -1,6 +1,14 @@
-# bsky
+# bsctl
 
-bluesky CLI client written in Go
+bluesky web CLI client written in Go.
+
+Originally based on [mattn/bsky](https://github.com/mattn/bsky).
+The purpose of this fork is to make the CLI runnable as a client side 
+web application using [WebAssembly](https://webassembly.org/) and 
+[goapp](https://github.com/maxence-charriere/go-app).
+
+
+
 
 ## Usage
 

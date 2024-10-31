@@ -29,7 +29,7 @@ func (m *XRPCManager) MakeXRPCC(ctx context.Context) (*xrpc.Client, error) {
 
 	auth, err := m.AuthManager.ReadAuth()
 	if err == nil && auth.AccessJwt != "" && auth.RefreshJwt != "" {
-		log.Info("Auth found, attempting to refresh session", "auth", auth)
+		log.Info("Auth found, attempting to refresh session")
 		xrpcc.Auth = auth
 		xrpcc.Auth.AccessJwt = xrpcc.Auth.RefreshJwt
 		refresh, err2 := comatproto.ServerRefreshSession(context.TODO(), xrpcc)

@@ -2,18 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-logr/zapr"
 	"github.com/mattn/bsky/pkg"
+	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
+)
 
-	"github.com/maxence-charriere/go-app/v9/pkg/app"
+const (
+	outputBoxID = "output-box"
 )
 
 // CommandApp represents the chat-like application.
@@ -28,6 +31,7 @@ func (a *CommandApp) Render() app.UI {
 	return app.Div().Body(
 		// Display area for previous commands
 		app.Div().
+			ID(outputBoxID).
 			Style("border", "1px solid #ddd").
 			Style("height", "400px").
 			Style("overflow-y", "auto").
@@ -49,7 +53,7 @@ func (a *CommandApp) Render() app.UI {
 					Placeholder("Enter command...").
 					Style("flex", "1").
 					Style("padding", "10px").
-					OnChange(a.OnInputChange).OnKeyPress(func(ctx app.Context, e app.Event) {
+					OnChange(a.OnInputChange).OnKeyDown(func(ctx app.Context, e app.Event) {
 					if e.Get("key").String() == "Enter" {
 						a.OnEnterCommand(ctx, e)
 					}
@@ -77,65 +81,39 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 		// the password
 		parts := strings.Fields(a.input)
 		command := parts[0]
-
+		subCommand := ""
+		if len(parts) > 1 {
+			subCommand = parts[1]
+		}
 		err := func() error {
 			switch command {
-			case "login":
-				handle := parts[1]
-				password := parts[2]
-
-				// Store handle and password in local storage
-				// TODO(jeremy): Should we use ctx.Set with the persist option?
-				ctx.LocalStorage().Set("handle", handle)
-				ctx.LocalStorage().Set("password", password)
-
-				output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
-				a.commands = append(a.commands, output)
-
-			case "follow":
-				return a.handleFollow(ctx)
-			case "follows":
-				output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
-				a.commands = append(a.commands, output)
-
-				handle := ""
-				if err := ctx.LocalStorage().Get("handle", &handle); err != nil {
-					return errors.Wrapf(err, "failed to get handle from local storage")
-				}
-
-				password := ""
-				if err := ctx.LocalStorage().Get("password", &password); err != nil {
-					return errors.Wrapf(err, "failed to get password from local storage")
-				}
-
-				m := pkg.XRPCManager{
-					AuthManager: &pkg.AuthLocalStorage{
-						Ctx: ctx,
-					},
-					// TODO(jeremy): We should avoid hardcoding this.
-					Config: &pkg.Config{
-						Bgs:      "https://bsky.network",
-						Host:     "https://bsky.social",
-						Handle:   handle,
-						Password: password,
-					},
-				}
-
-				client, err := m.MakeXRPCC(context.Background())
-				if err != nil {
-					output := fmt.Sprintf("Failed to MakeXRPCC: %+v", err)
-					a.commands = append(a.commands, output)
-				}
-				var w strings.Builder
-				if err := pkg.DoFollows(client, handle, &w); err != nil {
-					output := fmt.Sprintf("Failed to DoFollows: %+v", err)
+			//case "login":
+			//	handle := parts[1]
+			//	password := parts[2]
+			//
+			//	// Store handle and password in local storage
+			//	// TODO(jeremy): Should we use ctx.Set with the persist option?
+			//	ctx.LocalStorage().Set("handle", handle)
+			//	ctx.LocalStorage().Set("password", password)
+			//
+			//	output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
+			//	a.commands = append(a.commands, output)
+			case "config":
+				switch subCommand {
+				case "set":
+					return a.handleSetConfig(ctx)
+				case "get":
+					return a.handleGetConfig(ctx)
+				default:
+					output := fmt.Sprintf("Invalid subcommand %s; must be config get or config set", subCommand)
 					a.commands = append(a.commands, output)
 					return nil
 				}
 
-				output = fmt.Sprintf("Command: %s\nOutput: %s", a.input, w.String())
-				a.commands = append(a.commands, output)
-				return nil
+			case "follow":
+				return a.handleFollow(ctx)
+			case "follows":
+				return a.handleFollows(ctx)
 			default:
 				// Original behavior for other commands
 				output := fmt.Sprintf("Unrecognized command %s", command)
@@ -151,8 +129,79 @@ func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 		//output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
 		//a.commands = append(a.commands, output)
 		a.input = ""
+		a.scrollToBottom(ctx)
 		a.Update()
 	}
+}
+
+func (a *CommandApp) handleSetConfig(ctx app.Context) error {
+	parts := strings.SplitN(a.input, " ", 3)
+	if len(parts) != 3 {
+		output := fmt.Sprintf("Invalid command format. Use:\nconfig set <key>=<value>")
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	keyValue := parts[2]
+	pieces := strings.SplitN(keyValue, "=", 2)
+	if len(pieces) != 2 {
+		output := fmt.Sprintf("Invalid command format. Use:\nconfig set <key>=<value>")
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	key := pieces[0]
+	value := pieces[1]
+
+	cfg := &pkg.Config{}
+	if err := ctx.LocalStorage().Get("config", cfg); err != nil {
+		return errors.Wrapf(err, "failed to read config from local storage")
+	}
+
+	switch key {
+	case "handle":
+		cfg.Handle = value
+	case "password":
+		cfg.Password = value
+	case "bgs":
+		cfg.Bgs = value
+	case "host":
+		cfg.Host = value
+
+	default:
+		output := fmt.Sprintf("Invalid key %s; must be handle, password, bgs, or host", key)
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	// Set defaults if they aren't set
+	if cfg.Bgs == "" {
+		cfg.Bgs = "https://bsky.network"
+	}
+
+	if cfg.Host == "" {
+		cfg.Host = "https://bsky.social"
+	}
+
+	if err := ctx.LocalStorage().Set("config", cfg); err != nil {
+		return errors.Wrapf(err, "failed to write config to local storage")
+	}
+	return nil
+}
+
+func (a *CommandApp) handleGetConfig(ctx app.Context) error {
+	cfg := &pkg.Config{}
+	if err := ctx.LocalStorage().Get("config", cfg); err != nil {
+		return errors.Wrapf(err, "failed to read config from local storage")
+	}
+
+	j, err := json.Marshal(cfg)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal config")
+	}
+	output := "Config: " + string(j)
+	a.commands = append(a.commands, output)
+	return nil
 }
 
 func (a *CommandApp) handleFollow(ctx app.Context) error {
@@ -169,7 +218,7 @@ func (a *CommandApp) handleFollow(ctx app.Context) error {
 	parts := strings.Fields(a.input)
 
 	if len(parts) != 2 {
-		output := fmt.Sprintf("Invalid command format. Use: follow <URI")
+		output := fmt.Sprintf("Invalid command format. Use: follow <URI>")
 		a.commands = append(a.commands, output)
 		return nil
 	}
@@ -186,6 +235,46 @@ func (a *CommandApp) handleFollow(ctx app.Context) error {
 	return nil
 }
 
+func (a *CommandApp) handleFollows(ctx app.Context) error {
+	m, err := a.getXRPCManager(ctx)
+	if err != nil {
+		return err
+	}
+
+	client, err := m.MakeXRPCC(context.Background())
+	if err != nil {
+		return err
+	}
+
+	var w strings.Builder
+	if err := pkg.DoFollows(client, m.Config.Handle, &w); err != nil {
+		output := fmt.Sprintf("Failed to DoFollows: %+v", err)
+		a.commands = append(a.commands, output)
+		return nil
+	}
+
+	output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, w.String())
+	a.commands = append(a.commands, output)
+	return nil
+}
+
+func (a *CommandApp) getConfig(ctx app.Context) (*pkg.Config, error) {
+	cfg := &pkg.Config{}
+	if err := ctx.LocalStorage().Get("config", cfg); err != nil {
+		return nil, errors.Wrapf(err, "failed to read config from local storage")
+	}
+	// Set defaults if they aren't set
+	if cfg.Bgs == "" {
+		cfg.Bgs = "https://bsky.network"
+	}
+
+	if cfg.Host == "" {
+		cfg.Host = "https://bsky.social"
+	}
+
+	return cfg, nil
+}
+
 func (a *CommandApp) getXRPCManager(ctx app.Context) (*pkg.XRPCManager, error) {
 	if a.manager != nil {
 		return a.manager, nil
@@ -193,37 +282,39 @@ func (a *CommandApp) getXRPCManager(ctx app.Context) (*pkg.XRPCManager, error) {
 	log := zapr.NewLogger(zap.L())
 	log.Info("Creating xRPCManager")
 
-	handle := ""
-	if err := ctx.LocalStorage().Get("handle", &handle); err != nil {
-		return nil, errors.Wrapf(err, "failed to get handle from local storage")
+	cfg, err := a.getConfig(ctx)
+
+	if err != nil {
+		return nil, err
 	}
 
-	password := ""
-	if err := ctx.LocalStorage().Get("password", &password); err != nil {
-		return nil, errors.Wrapf(err, "failed to get password from local storage")
+	if cfg.Handle == "" {
+		return nil, errors.New("host not set. Run config set handle=<handle> to set it")
+	}
+
+	if cfg.Password == "" {
+		return nil, errors.New("password not set. Run config set password=password to set it")
 	}
 
 	m := pkg.XRPCManager{
 		AuthManager: &pkg.AuthLocalStorage{
 			Ctx: ctx,
 		},
-		// TODO(jeremy): We should avoid hardcoding this.
-		Config: &pkg.Config{
-			Bgs:      "https://bsky.network",
-			Host:     "https://bsky.social",
-			Handle:   handle,
-			Password: password,
-		},
+		Config: cfg,
 	}
 
 	a.manager = &m
 	return &m, nil
 }
 
-// fakeCommandExecution simulates executing a command and returns a response.
-func fakeCommandExecution(command string) string {
-	time.Sleep(500 * time.Millisecond) // Simulate some processing delay
-	return fmt.Sprintf("Executed command '%s' successfully.", command)
+func (a *CommandApp) scrollToBottom(ctx app.Context) {
+	ctx.Async(func() {
+		element := app.Window().GetElementByID(outputBoxID)
+		if element.Truthy() {
+			scrollHeight := element.Get("scrollHeight").Int()
+			element.Set("scrollTop", scrollHeight)
+		}
+	})
 }
 
 func main() {
@@ -240,6 +331,7 @@ func main() {
 
 	// Register the root component.
 	bucketName := "/bsctl"
+	pkg.LogVersion()
 	// N.B. if we run it locally we will serve it on "/"
 	// But when we run it on GCS we will serve it on the bucket name. so we add a second route
 	log.Info("Registering path", "path", "/")

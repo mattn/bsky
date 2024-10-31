@@ -9,6 +9,16 @@ GOOS := $(shell go env GOOS)
 GOBIN ?= $(shell go env GOPATH)/bin
 export GO111MODULE=on
 
+GIT_SHA := $(shell git rev-parse HEAD)
+GIT_SHA_SHORT := $(shell git rev-parse --short HEAD)
+DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+VERSION := $(shell git describe --tags)-$(GIT_SHA_SHORT)
+LDFLAGS := -s -w \
+        -X 'github.com/mattn/bsky/pkg.Date=$(DATE)' \
+        -X 'github.com/mattn/bsky/pkg.Version=$(subst v,,$(VERSION))' \
+        -X 'github.com/mattn/bsky/pkg.Commit=$(GIT_SHA)' \
+		-X 'github.com/mattn/bsky/pkg.BuiltBy=$(GIT_SHA)'
+
 .PHONY: all
 all: clean build
 
@@ -18,13 +28,13 @@ build:
 
 .PHONY: pwa
 pwa:
-	GOOS=js GOARCH=wasm go build -o web/app.wasm ./pwa
-	go build -o .build/pwa-server ./pwa
+	GOOS=js GOARCH=wasm go build -o web/app.wasm -ldflags="$(LDFLAGS)" ./pwa
+	go build -o .build/pwa-server -ldflags="$(LDFLAGS)" ./pwa
 
 # Build a static website
 .PHONY: pwa
 static:	
-	GOOS=js GOARCH=wasm go build -o .build/static/web/app.wasm ./pwa
+	GOOS=js GOARCH=wasm go build -o .build/static/web/app.wasm -ldflags="$(LDFLAGS)" ./pwa
 	BUILD_STATIC=.build/static go run ./pwa
 
 .PHONY: release
