@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jlewi/bsctl/pkg"
 	"os"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
@@ -16,7 +17,7 @@ func doListAppPasswords(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -49,7 +50,7 @@ func doAddAppPassword(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -77,7 +78,7 @@ func doRevokeAppPassword(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}

@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bluesky-social/indigo/xrpc"
+	"github.com/jlewi/bsctl/pkg"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -23,7 +28,7 @@ func doShowProfile(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -45,12 +50,12 @@ func doShowProfile(cCtx *cli.Context) error {
 
 	fmt.Printf("Did: %s\n", profile.Did)
 	fmt.Printf("Handle: %s\n", profile.Handle)
-	fmt.Printf("DisplayName: %s\n", stringp(profile.DisplayName))
-	fmt.Printf("Description: %s\n", stringp(profile.Description))
-	fmt.Printf("Follows: %d\n", int64p(profile.FollowsCount))
-	fmt.Printf("Followers: %d\n", int64p(profile.FollowersCount))
-	fmt.Printf("Avatar: %s\n", stringp(profile.Avatar))
-	fmt.Printf("Banner: %s\n", stringp(profile.Banner))
+	fmt.Printf("DisplayName: %s\n", pkg.Stringp(profile.DisplayName))
+	fmt.Printf("Description: %s\n", pkg.Stringp(profile.Description))
+	fmt.Printf("Follows: %d\n", pkg.Int64p(profile.FollowsCount))
+	fmt.Printf("Followers: %d\n", pkg.Int64p(profile.FollowersCount))
+	fmt.Printf("Avatar: %s\n", pkg.Stringp(profile.Avatar))
+	fmt.Printf("Banner: %s\n", pkg.Stringp(profile.Banner))
 	return nil
 }
 
@@ -80,7 +85,7 @@ func doUpdateProfile(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -98,7 +103,7 @@ func doUpdateProfile(cCtx *cli.Context) error {
 
 	var avatar *lexutil.LexBlob
 	if currentProfile.Avatar != nil {
-		currentAvatarCid, currentAvatarType, err := ParseCid(currentProfile.Avatar)
+		currentAvatarCid, currentAvatarType, err := pkg.ParseCid(currentProfile.Avatar)
 		if err != nil {
 			return fmt.Errorf("cannot parse avatar cid: %w", err)
 		}
@@ -126,7 +131,7 @@ func doUpdateProfile(cCtx *cli.Context) error {
 
 	var banner *lexutil.LexBlob
 	if currentProfile.Banner != nil {
-		currentBannerCid, currentBannerType, err := ParseCid(currentProfile.Banner)
+		currentBannerCid, currentBannerType, err := pkg.ParseCid(currentProfile.Banner)
 		if err != nil {
 			return fmt.Errorf("cannot parse banner cid: %w", err)
 		}
@@ -178,18 +183,61 @@ func doUpdateProfile(cCtx *cli.Context) error {
 }
 
 func doFollow(cCtx *cli.Context) error {
-	if !cCtx.Args().Present() {
+	handles := cCtx.Args().Slice()
+	// Check if a file path is provided
+	if filePath := cCtx.String("file"); filePath != "" {
+		var fContents []byte
+		var err error
+
+		// Support reading YAML files directly from git.
+		if strings.HasPrefix(filePath, "http://") || strings.HasPrefix(filePath, "https://") {
+			// Handle URL
+			resp, err := http.Get(filePath)
+			if err != nil {
+				return errors.Wrapf(err, "cannot fetch URL %s", filePath)
+			}
+			defer resp.Body.Close()
+
+			fContents, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return errors.Wrapf(err, "cannot read response body from URL %s", filePath)
+			}
+		} else {
+			// Handle local file
+			fContents, err = os.ReadFile(filePath)
+			if err != nil {
+				return errors.Wrapf(err, "cannot read file %s", filePath)
+			}
+		}
+		list := &pkg.FollowList{}
+		if err := yaml.Unmarshal(fContents, &list); err != nil {
+			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
+		}
+
+		for _, a := range list.Accounts {
+			handles = append(handles, a.Handle)
+		}
+	}
+
+	if len(handles) == 0 {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	for _, arg := range cCtx.Args().Slice() {
+	for _, arg := range handles {
 		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
 		if err != nil {
+			var xErr *xrpc.Error
+			if errors.As(err, &xErr) {
+				if 400 == xErr.StatusCode {
+					fmt.Printf("Profile not found for handle: %s\n", arg)
+					continue
+				}
+			}
 			return fmt.Errorf("cannot get profile: %w", err)
 		}
 
@@ -219,7 +267,7 @@ func doUnfollow(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -240,7 +288,7 @@ func doUnfollow(cCtx *cli.Context) error {
 		}
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
-		fmt.Println(stringp(profile.Viewer.Following))
+		fmt.Println(pkg.Stringp(profile.Viewer.Following))
 		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
@@ -253,57 +301,12 @@ func doUnfollow(cCtx *cli.Context) error {
 	return nil
 }
 
-func doFollows(cCtx *cli.Context) error {
-	if cCtx.Args().Present() {
-		return cli.ShowSubcommandHelp(cCtx)
-	}
-
-	xrpcc, err := makeXRPCC(cCtx)
-	if err != nil {
-		return fmt.Errorf("cannot create client: %w", err)
-	}
-
-	arg := cCtx.String("handle")
-	if arg == "" {
-		arg = xrpcc.Auth.Handle
-	}
-
-	var cursor string
-	for {
-		follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, arg, cursor, 100)
-		if err != nil {
-			return fmt.Errorf("getting record: %w", err)
-		}
-
-		if cCtx.Bool("json") {
-			for _, f := range follows.Follows {
-				json.NewEncoder(os.Stdout).Encode(f)
-			}
-		} else {
-			for _, f := range follows.Follows {
-				color.Set(color.FgHiRed)
-				fmt.Print(f.Handle)
-				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", stringp(f.DisplayName))
-				color.Set(color.FgBlue)
-				fmt.Println(f.Did)
-				color.Set(color.Reset)
-			}
-		}
-		if follows.Cursor == nil {
-			break
-		}
-		cursor = *follows.Cursor
-	}
-	return nil
-}
-
 func doFollowers(cCtx *cli.Context) error {
 	if cCtx.Args().Present() {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -329,7 +332,7 @@ func doFollowers(cCtx *cli.Context) error {
 				color.Set(color.FgHiRed)
 				fmt.Print(f.Handle)
 				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", stringp(f.DisplayName))
+				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
 				color.Set(color.FgBlue)
 				fmt.Println(f.Did)
 				color.Set(color.Reset)
@@ -348,7 +351,7 @@ func doBlock(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -385,7 +388,7 @@ func doUnblock(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -406,7 +409,7 @@ func doUnblock(cCtx *cli.Context) error {
 		}
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
-		fmt.Println(stringp(profile.Viewer.Blocking))
+		fmt.Println(pkg.Stringp(profile.Viewer.Blocking))
 		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
@@ -424,7 +427,7 @@ func doBlocks(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -445,7 +448,7 @@ func doBlocks(cCtx *cli.Context) error {
 				color.Set(color.FgHiRed)
 				fmt.Print(f.Handle)
 				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", stringp(f.DisplayName))
+				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
 				color.Set(color.FgBlue)
 				fmt.Println(f.Did)
 				color.Set(color.Reset)
@@ -461,7 +464,7 @@ func doBlocks(cCtx *cli.Context) error {
 
 func doLogin(cCtx *cli.Context) error {
 	fp, _ := cCtx.App.Metadata["path"].(string)
-	var cfg config
+	var cfg pkg.Config
 	cfg.Host = cCtx.String("host")
 	cfg.Bgs = cCtx.String("bgs")
 	cfg.Handle = cCtx.Args().Get(0)
@@ -471,11 +474,11 @@ func doLogin(cCtx *cli.Context) error {
 	}
 	b, err := json.MarshalIndent(&cfg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("cannot make config file: %w", err)
+		return fmt.Errorf("cannot make Config file: %w", err)
 	}
 	err = os.WriteFile(fp, b, 0644)
 	if err != nil {
-		return fmt.Errorf("cannot write config file: %w", err)
+		return fmt.Errorf("cannot write Config file: %w", err)
 	}
 	return nil
 }
@@ -485,7 +488,7 @@ func doNotification(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -509,7 +512,7 @@ func doNotification(cCtx *cli.Context) error {
 		color.Set(color.FgHiRed)
 		fmt.Print(n.Author.Handle)
 		color.Set(color.Reset)
-		fmt.Printf(" [%s] ", stringp(n.Author.DisplayName))
+		fmt.Printf(" [%s] ", pkg.Stringp(n.Author.DisplayName))
 		color.Set(color.FgBlue)
 		fmt.Println(n.Author.Did)
 		color.Set(color.Reset)
@@ -534,7 +537,7 @@ func doNotification(cCtx *cli.Context) error {
 }
 
 func doShowSession(cCtx *cli.Context) error {
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -550,13 +553,13 @@ func doShowSession(cCtx *cli.Context) error {
 	}
 
 	fmt.Printf("Did: %s\n", session.Did)
-	fmt.Printf("Email: %s\n", stringp(session.Email))
+	fmt.Printf("Email: %s\n", pkg.Stringp(session.Email))
 	fmt.Printf("Handle: %s\n", session.Handle)
 	return nil
 }
 
 func doInviteCodes(cCtx *cli.Context) error {
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}

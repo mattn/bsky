@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jlewi/bsctl/pkg"
 	"io"
 	"log"
 	"net/http"
@@ -42,7 +43,7 @@ func doThread(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -70,9 +71,9 @@ func doThread(cCtx *cli.Context) error {
 	for i := 0; i < len(replies)/2; i++ {
 		replies[i], replies[len(replies)-i-1] = replies[len(replies)-i-1], replies[i]
 	}
-	printPost(resp.Thread.FeedDefs_ThreadViewPost.Post)
+	pkg.PrintPost(resp.Thread.FeedDefs_ThreadViewPost.Post)
 	for _, r := range replies {
-		printPost(r.FeedDefs_ThreadViewPost.Post)
+		pkg.PrintPost(r.FeedDefs_ThreadViewPost.Post)
 	}
 	return nil
 }
@@ -82,7 +83,7 @@ func doTimeline(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -127,8 +128,8 @@ func doTimeline(cCtx *cli.Context) error {
 	}
 
 	sort.Slice(feed, func(i, j int) bool {
-		ri := timep(feed[i].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
-		rj := timep(feed[j].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
+		ri := pkg.Timep(feed[i].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
+		rj := pkg.Timep(feed[j].Post.Record.Val.(*bsky.FeedPost).CreatedAt)
 		return ri.Before(rj)
 	})
 	if int64(len(feed)) > n {
@@ -143,7 +144,7 @@ func doTimeline(cCtx *cli.Context) error {
 			//if p.Reason != nil {
 			//continue
 			//}
-			printPost(p.Post)
+			pkg.PrintPost(p.Post)
 		}
 	}
 
@@ -155,7 +156,7 @@ func doDelete(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -275,7 +276,7 @@ func doPost(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -454,7 +455,7 @@ func doVote(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -501,7 +502,7 @@ func doVotes(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -540,8 +541,8 @@ func doVotes(cCtx *cli.Context) error {
 		color.Set(color.FgHiRed)
 		fmt.Print(v.Actor.Handle)
 		color.Set(color.Reset)
-		fmt.Printf(" [%s]", stringp(v.Actor.DisplayName))
-		fmt.Printf(" (%v)\n", timep(v.CreatedAt))
+		fmt.Printf(" [%s]", pkg.Stringp(v.Actor.DisplayName))
+		fmt.Printf(" (%v)\n", pkg.Timep(v.CreatedAt))
 	}
 
 	return nil
@@ -552,7 +553,7 @@ func doRepost(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -602,7 +603,7 @@ func doReposts(cCtx *cli.Context) error {
 		return cli.ShowSubcommandHelp(cCtx)
 	}
 
-	xrpcc, err := makeXRPCC(cCtx)
+	xrpcc, err := pkg.MakeXRPCC(cCtx)
 	if err != nil {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
@@ -641,7 +642,7 @@ func doReposts(cCtx *cli.Context) error {
 		color.Set(color.FgHiRed)
 		fmt.Print(r.Handle)
 		color.Set(color.Reset)
-		fmt.Printf(" [%s]\n", stringp(r.DisplayName))
+		fmt.Printf(" [%s]\n", pkg.Stringp(r.DisplayName))
 	}
 
 	return nil
@@ -652,7 +653,7 @@ func doStream(cCtx *cli.Context) error {
 	if cCtx.Args().Present() {
 		host = cCtx.Args().First()
 	} else {
-		cfg := cCtx.App.Metadata["config"].(*config)
+		cfg := cCtx.App.Metadata["Config"].(*pkg.Config)
 		host = cfg.Bgs
 		if host == "" {
 			host = cfg.Host
@@ -730,7 +731,7 @@ func doStream(cCtx *cli.Context) error {
 				Rec:  rec,
 			})
 		} else if isPost {
-			xrpcc, err := makeXRPCC(cCtx)
+			xrpcc, err := pkg.MakeXRPCC(cCtx)
 			if err != nil {
 				return fmt.Errorf("cannot create client: %w", err)
 			}
@@ -747,11 +748,11 @@ func doStream(cCtx *cli.Context) error {
 				post.Record = &lexutil.LexiconTypeDecoder{
 					Val: orig,
 				}
-				printPost(&post)
+				pkg.PrintPost(&post)
 			}
 		}
 		if orig != nil && reply != "" {
-			xrpcc, err := makeXRPCC(cCtx)
+			xrpcc, err := pkg.MakeXRPCC(cCtx)
 			if err != nil {
 				return fmt.Errorf("cannot create client: %w", err)
 			}

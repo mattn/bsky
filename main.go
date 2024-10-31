@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/jlewi/bsctl/pkg"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -12,16 +13,6 @@ const name = "bsky"
 const version = "0.0.61"
 
 var revision = "HEAD"
-
-type config struct {
-	Bgs      string `json:"bgs"`
-	Host     string `json:"host"`
-	Handle   string `json:"handle"`
-	Password string `json:"password"`
-	dir      string
-	verbose  bool
-	prefix   string
-}
 
 func main() {
 	app := &cli.App{
@@ -170,6 +161,9 @@ func main() {
 				UsageText:   "bsky follow [handle]",
 				HelpName:    "follow",
 				Action:      doFollow,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "file", Aliases: []string{"f"}, Value: "", Usage: "-f Path to a YAML file containing a FollowList of accounts to follow."},
+				},
 			},
 			{
 				Name:        "unfollow",
@@ -179,18 +173,19 @@ func main() {
 				HelpName:    "unfollow",
 				Action:      doUnfollow,
 			},
-			{
-				Name:        "follows",
-				Description: "Show follows",
-				Usage:       "Show follows",
-				UsageText:   "bsky follows",
-				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
-					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
-				},
-				HelpName: "follows",
-				Action:   doFollows,
-			},
+			// TODO(jeremy): Need to fix this.
+			//{
+			//	Name:        "follows",
+			//	Description: "Show follows",
+			//	Usage:       "Show follows",
+			//	UsageText:   "bsky follows",
+			//	Flags: []cli.Flag{
+			//		&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+			//		&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+			//	},
+			//	HelpName: "follows",
+			//	Action:   pkg.DoFollows,
+			//},
 			{
 				Name:        "followers",
 				Description: "Show followers",
@@ -318,18 +313,18 @@ func main() {
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {
 			profile := cCtx.String("a")
-			cfg, fp, err := loadConfig(profile)
+			cfg, fp, err := pkg.LoadConfig(profile)
 			cCtx.App.Metadata["path"] = fp
 			if cCtx.Args().Get(0) == "login" {
 				return nil
 			}
 			if err != nil {
-				return fmt.Errorf("cannot load config file: %w", err)
+				return fmt.Errorf("cannot load Config file: %w", err)
 			}
-			cCtx.App.Metadata["config"] = cfg
-			cfg.verbose = cCtx.Bool("V")
+			cCtx.App.Metadata["Config"] = cfg
+			cfg.Verbose = cCtx.Bool("V")
 			if profile != "" {
-				cfg.prefix = profile + "-"
+				cfg.Prefix = profile + "-"
 			}
 			return nil
 		},

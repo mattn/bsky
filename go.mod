@@ -1,4 +1,4 @@
-module github.com/mattn/bsky
+module github.com/jlewi/bsctl
 
 go 1.22
 
@@ -8,12 +8,21 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/bluesky-social/indigo v0.0.0-20240503174839-ef8e99bfcc76
 	github.com/fatih/color v1.16.0
+	github.com/go-logr/zapr v1.3.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/ipfs/go-cid v0.4.1
+	github.com/labstack/gommon v0.4.1
+	github.com/maxence-charriere/go-app/v9 v9.8.0
+	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.27.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/orandin/slog-gorm v1.3.2 // indirect
+require (
+	github.com/orandin/slog-gorm v1.3.2 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
+)
 
 require (
 	github.com/RussellLuo/slidingwindow v0.0.0-20200528002341-535bb99d338b // indirect
@@ -103,7 +112,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/net v0.24.0
