@@ -11,13 +11,18 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/ipfs/go-cid v0.4.1
+	github.com/labstack/gommon v0.4.1
 	github.com/maxence-charriere/go-app/v9 v9.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.27.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/orandin/slog-gorm v1.3.2 // indirect
+require (
+	github.com/orandin/slog-gorm v1.3.2 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
+)
 
 require (
 	github.com/RussellLuo/slidingwindow v0.0.0-20200528002341-535bb99d338b // indirect

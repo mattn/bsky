@@ -173,18 +173,19 @@ func main() {
 				HelpName:    "unfollow",
 				Action:      doUnfollow,
 			},
-			{
-				Name:        "follows",
-				Description: "Show follows",
-				Usage:       "Show follows",
-				UsageText:   "bsky follows",
-				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
-					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
-				},
-				HelpName: "follows",
-				Action:   pkg.DoFollows,
-			},
+			// TODO(jeremy): Need to fix this.
+			//{
+			//	Name:        "follows",
+			//	Description: "Show follows",
+			//	Usage:       "Show follows",
+			//	UsageText:   "bsky follows",
+			//	Flags: []cli.Flag{
+			//		&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+			//		&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+			//	},
+			//	HelpName: "follows",
+			//	Action:   pkg.DoFollows,
+			//},
 			{
 				Name:        "followers",
 				Description: "Show followers",

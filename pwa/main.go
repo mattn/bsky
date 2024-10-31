@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -47,8 +49,11 @@ func (a *CommandApp) Render() app.UI {
 					Placeholder("Enter command...").
 					Style("flex", "1").
 					Style("padding", "10px").
-					OnChange(a.OnInputChange),
-
+					OnChange(a.OnInputChange).OnKeyPress(func(ctx app.Context, e app.Event) {
+					if e.Get("key").String() == "Enter" {
+						a.OnEnterCommand(ctx, e)
+					}
+				}),
 				app.Button().
 					Text("Enter").
 					OnClick(a.OnEnterCommand).
@@ -231,11 +236,19 @@ func main() {
 	}
 
 	zap.ReplaceGlobals(newLogger)
+	log := zapr.NewLogger(newLogger)
 
 	// Register the root component.
+	bucketName := "/bsctl"
+	// N.B. if we run it locally we will serve it on "/"
+	// But when we run it on GCS we will serve it on the bucket name. so we add a second route
+	log.Info("Registering path", "path", "/")
 	app.Route("/", &CommandApp{})
+	log.Info("Registering path", "path", bucketName)
+	app.Route(bucketName, &CommandApp{})
 	app.RunWhenOnBrowser()
 
+	log.Info("Running code path for server")
 	// Once the routes set up, the next thing to do is to either launch the app
 	// or the server that serves the app.
 	//
@@ -247,9 +260,9 @@ func main() {
 	// When executed on the server-side, RunWhenOnBrowser() does nothing, which
 	// lets room for server implementation without the need for precompiling
 	// instructions.
-	http.Handle("/", &app.Handler{
-		Name:        "Hello",
-		Description: "An Hello World! example",
+	handler := &app.Handler{
+		Name:        "bsctl",
+		Description: "WebCLI for BlueSky",
 		//Resources:   app.CustomProvider("", "/viewer"),
 		//Styles: []string{
 		//	"/web/table.css",
@@ -258,10 +271,33 @@ func main() {
 		//Env: map[string]string{
 		//	logsviewer.APIPrefixEnvVar: "api",
 		//},
-	})
+	}
+	buildStatic := os.Getenv("BUILD_STATIC")
 
-	if err := http.ListenAndServe(":8000", nil); err != nil {
-		//log.Fatal(err)
-		fmt.Printf("Error starting server: %v\n", err)
+	if buildStatic == "" {
+		http.Handle("/", handler)
+
+		if err := http.ListenAndServe(":8000", nil); err != nil {
+			//log.Fatal(err)
+			fmt.Printf("Error starting server: %v\n", err)
+		}
+	} else {
+		// Generate a static website for serving
+		// N.B. We need to use a CustomProvider because all the resources will be on
+		// https://storage.googleapis.com/bsctl
+
+		handler.Resources = app.CustomProvider("", bucketName)
+		// Does GenerateStaticWebsite require absolute paths?
+		buildStatic, err = filepath.Abs(buildStatic)
+		if err != nil {
+			fmt.Printf("Error getting absolute path: %v\n", err)
+			return
+		}
+		if err := app.GenerateStaticWebsite(buildStatic, handler); err != nil {
+			fmt.Printf("Error generating static website: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Static website generated in %s\n", buildStatic)
 	}
 }

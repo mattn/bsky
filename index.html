@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go WASM App</title>
+    <script src="web/wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("web/app.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+    </script>
+</head>
+<body>
+<div id="app"></div>
+<!-- Include additional app.js if you have them.
+<script src="app.js"></script>
+-->
+</body>
+</html>
