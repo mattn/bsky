@@ -23,7 +23,7 @@ bsctl makes it easy to follow all the accounts listed in a YAML file in GitHub s
 1. Set your bluesky password by entering the following command
 
    ```
-   config set handle=<YOUR bluesky password> 
+   config set password=<YOUR bluesky password> 
    ```
    
    * Click the "enter" button
