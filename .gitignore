@@ -7,3 +7,6 @@ tmp
 .idea/**
 **/*.wasm
 **/.build
+**/.terraform
+**/.terraform*
+web/** 
