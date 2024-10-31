@@ -2,81 +2,64 @@
 
 bluesky web CLI client written in Go.
 
-Originally based on [mattn/bsky](https://github.com/mattn/bsky).
-The purpose of this fork is to make the CLI runnable as a client side 
-web application using [WebAssembly](https://webassembly.org/) and 
-[goapp](https://github.com/maxence-charriere/go-app).
-
-
-
+bsctl started as a way to enable people to collaborate on starter packs.
+bsctl makes it easy to follow all the accounts listed in a YAML file in GitHub such as 
+[https://github.com/jlewi/bskylists/blob/main/platformengineering.yaml](https://github.com/jlewi/bskylists/blob/main/platformengineering.yaml).
 
 ## Usage
 
-```
-NAME:
-   bsky - bsky
+1. Open the webapp at [https://storage.googleapis.com/bsctl/index.html](https://storage.googleapis.com/bsctl/index.html)
 
-USAGE:
-   bsky [global options] command [command options] [arguments...]
+1. Set your handle by entering the following command
 
-VERSION:
-   0.0.6
+   ```
+   config set handle=<YOUR bluesky handle e.g. alice.bsky.social> 
+   ```
+   
+   * Click the "enter" button
+   * Alternatively, you can press the enter key on your keyboard **twice** 
+     * Having to press enter twice is known issue [bsctl/1](https://github.com/jlewi/bsctl/issues/1)
 
-DESCRIPTION:
-   A cli application for bluesky
+1. Set your bluesky password by entering the following command
 
-COMMANDS:
-   show-profile    show profile
-   update-profile  update profile
-   timeline, tl    show timeline
-   search          search posts
-   thread          show thread
-   post            post new text
-   vote            vote the post
-   votes           show votes of the post
-   repost          repost the post
-   reposts         show reposts of the post
-   follow          follow the handle
-   follows         show follows
-   followers       show followers
-   delete          delete the note
-   login           login the social
-   help, h         Shows a list of commands or help for one command
+   ```
+   config set handle=<YOUR bluesky password> 
+   ```
+   
+   * Click the "enter" button
 
-GLOBAL OPTIONS:
-   -a value       profile name
-   -V             verbose (default: false)
-   --help, -h     show help
-   --version, -v  print the version
-```
+1. You can now run commands for example enter the following command to see your followers
 
-```
-$ bsky login [handle] [password]
-$ bsky timeline
-```
+   ```
+   followers
+   ```
+   
+1. To follow all the accounts listed in a YAML file such as [platformengineering.yaml](https://github.com/jlewi/bskylists/blob/main/platformengineering.yaml)
 
-```
-$ bsky post -image ~/pizza.jpg 'I love 🍕'
-```
+   ```
+   follow https://raw.githubusercontent.com/jlewi/bskylists/main/platformengineering.yaml
+   ```
+   
+  * **Important** The link should point at the raw version of the file
 
-```
-$ bsky vote at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
-$ bsky repost at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
-```
+## Why Not Just Use Bluesky Starter Packs
 
-## Installation
+As far as I can tell it doesn't seem possible to programmatically update starterpacks 
+[thread](https://bsky.app/profile/eribeiro.bsky.social/post/3l7t6gnvyck2a).
 
-Download binary from Release page.
+For the tech community, using Git/GitHub as a means to collaborate on starter packs seems like a natural fit.
+That requires moving the source of truth into git which requires a way to programmatically interact with Bluesky.
+While we can't programmatically update starter packs we can achieve a similar effect by making it easy to
+subscribe to a bunch of accounts in a list.
 
-Or install with go install command.
-```
-go install github.com/mattn/bsky@latest
-```
 
 ## License
 
 MIT
 
-## Author
+## Acknowledgement 
 
-Yasuhiro Matsumoto (a.k.a. mattn)
+Originally based on [mattn/bsky](https://github.com/mattn/bsky).
+The purpose of this fork is to make the CLI runnable as a client side
+web application using [WebAssembly](https://webassembly.org/) and
+[goapp](https://github.com/maxence-charriere/go-app).

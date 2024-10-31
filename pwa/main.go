@@ -400,6 +400,10 @@ func main() {
 	log.Info("Registering path", "path", bucketName)
 	app.Route(bucketName, &CommandApp{})
 	log.Info("Registering path", "path", "index.html")
+	// We need to register a route for "index.html" because that's the page we will access in
+	// Google Cloud Storage. Since we don't have a server that automatically removes index.html from the path
+	// it will appear in the path and affect the routing in GoApp. If we don't have this route
+	// we get a 404 when accessing it when deployed on Cloud Storage.
 	app.Route("/index.html", &CommandApp{})
 	app.RunWhenOnBrowser()
 
@@ -418,14 +422,9 @@ func main() {
 	handler := &app.Handler{
 		Name:        "bsctl",
 		Description: "WebCLI for BlueSky",
-		//Resources:   app.CustomProvider("", "/viewer"),
-		//Styles: []string{
-		//	"/web/table.css",
-		//	"/web/viewer.css",
-		//},
-		//Env: map[string]string{
-		//	logsviewer.APIPrefixEnvVar: "api",
-		//},
+		Icon: app.Icon{
+			SVG: "web/bluesky_Logo.png",
+		},
 	}
 	buildStatic := os.Getenv("BUILD_STATIC")
 
