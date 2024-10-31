@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
@@ -61,6 +62,25 @@ func (a *CommandApp) OnInputChange(ctx app.Context, e app.Event) {
 func (a *CommandApp) OnEnterCommand(ctx app.Context, e app.Event) {
 	if a.input != "" {
 		// Append the command to the list of commands with a fake output
+		// TODO(jeremy): This seems to add extra quotes and doesn't handle the case where we have spaces in
+		// the password
+		parts := strings.Fields(a.input)
+		if len(parts) >= 3 && parts[0] == "login" {
+			handle := parts[1]
+			password := parts[2]
+
+			// Store handle and password in local storage
+			ctx.LocalStorage().Set("handle", handle)
+			ctx.LocalStorage().Set("password", password)
+
+			output := fmt.Sprintf("Command: %s\nOutput: Login credentials stored", a.input)
+			a.commands = append(a.commands, output)
+		} else {
+			// Original behavior for other commands
+			output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
+			a.commands = append(a.commands, output)
+		}
+
 		output := fmt.Sprintf("Command: %s\nOutput: %s", a.input, fakeCommandExecution(a.input))
 		a.commands = append(a.commands, output)
 		a.input = ""
