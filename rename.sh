@@ -1,13 +1,18 @@
 #!/bin/bash
 # This script is an example of handling renaming of golang packages and repositories.
 set -ex
-ORIGINAL="github.com/mattn/bsky"
-NEW="github.com/jlewi/bsctl"
+ORIGINAL="github.com\/mattn\/bsky"
+NEW="github.com\/jlewi\/bsctl"
 
 # Handle renaming of module
 find ./ -name "*.go"  -exec  sed -i ".bak" "s/${ORIGINAL}/${NEW}/g" {} ";"
 # Find and update all go.mod files
 find ./ -name "go.mod"  -exec sed -i ".bak" "s/${ORIGINAL}/${NEW}/g" {} ";"
+# Update all makefile
+find ./ -name "Makefile"  -exec sed -i ".bak" "s/${ORIGINAL}/${NEW}/g" {} ";"
+find ./ -name "*.bak" -exec rm {} ";"
+
+exit 0
 
 # These rule updates all go files
 find ./ -name "*.go"  -exec  sed -i ".bak" "s/pkg.loadConfig/pkg.LoadConfig/g" {} ";"
