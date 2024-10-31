@@ -209,7 +209,7 @@ func doFollow(cCtx *cli.Context) error {
 				return errors.Wrapf(err, "cannot read file %s", filePath)
 			}
 		}
-		list := &FollowList{}
+		list := &pkg.FollowList{}
 		if err := yaml.Unmarshal(fContents, &list); err != nil {
 			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
 		}
@@ -297,51 +297,6 @@ func doUnfollow(cCtx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func doFollows(cCtx *cli.Context) error {
-	if cCtx.Args().Present() {
-		return cli.ShowSubcommandHelp(cCtx)
-	}
-
-	xrpcc, err := pkg.MakeXRPCC(cCtx)
-	if err != nil {
-		return fmt.Errorf("cannot create client: %w", err)
-	}
-
-	arg := cCtx.String("handle")
-	if arg == "" {
-		arg = xrpcc.Auth.Handle
-	}
-
-	var cursor string
-	for {
-		follows, err := bsky.GraphGetFollows(context.TODO(), xrpcc, arg, cursor, 100)
-		if err != nil {
-			return fmt.Errorf("getting record: %w", err)
-		}
-
-		if cCtx.Bool("json") {
-			for _, f := range follows.Follows {
-				json.NewEncoder(os.Stdout).Encode(f)
-			}
-		} else {
-			for _, f := range follows.Follows {
-				color.Set(color.FgHiRed)
-				fmt.Print(f.Handle)
-				color.Set(color.Reset)
-				fmt.Printf(" [%s] ", pkg.Stringp(f.DisplayName))
-				color.Set(color.FgBlue)
-				fmt.Println(f.Did)
-				color.Set(color.Reset)
-			}
-		}
-		if follows.Cursor == nil {
-			break
-		}
-		cursor = *follows.Cursor
 	}
 	return nil
 }

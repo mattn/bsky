@@ -183,7 +183,7 @@ func main() {
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
 				HelpName: "follows",
-				Action:   doFollows,
+				Action:   pkg.DoFollows,
 			},
 			{
 				Name:        "followers",
