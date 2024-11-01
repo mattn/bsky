@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	chrisAlbonDid = "did:plc:umpsiyampiq3bpgce7kigydz"
+)
+
 func Test_GetList(t *testing.T) {
 	if os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
@@ -24,7 +28,10 @@ func Test_GetList(t *testing.T) {
 	//listRef := "at://did:plc:umpsiyampiq3bpgce7kigydz/app.bsky.graph.list/3l7teemxtgy25"
 
 	// Oneof the lists I created
-	listRef := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7u3rez6hz2e"
+	//listRef := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7u3rez6hz2e"
+
+	// This is the list associated with my platform engineering starter pack
+	listRef := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7u5daz2qa2w"
 
 	cursor := ""
 	limit := int64(100)
@@ -39,6 +46,24 @@ func Test_GetList(t *testing.T) {
 		t.Fatalf("json.Marshal() = %v, wanted nil", err)
 	}
 	t.Logf("list:\n%+s", string(b))
+}
+
+func Test_AddToStarterPackList(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") != "" {
+		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
+	}
+
+	stuff, err := testSetup()
+	if err != nil {
+		t.Fatalf("testSetup() = %v, wanted nil", err)
+	}
+
+	// This is the list associated with my platform engineering starter pack
+	listRef := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7u5daz2qa2w"
+
+	if err := AddToList(stuff.Client, listRef, chrisAlbonDid); err != nil {
+		t.Fatalf("AddToList returned error: %+v", err)
+	}
 }
 
 func Test_CreateList(t *testing.T) {

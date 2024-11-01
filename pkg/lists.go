@@ -7,6 +7,9 @@ import (
 	"github.com/bluesky-social/indigo/api/bsky"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/xrpc"
+	"github.com/go-logr/zapr"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -100,3 +103,49 @@ func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
 	fmt.Printf("List item record created:\n%v", itemResp)
 	return nil
 }
+
+// AddToList adds a subjectDid to the list
+func AddToList(client *xrpc.Client, listURI string, subjectDid string) error {
+	item := bsky.GraphListitem{
+		LexiconTypeID: "app.bsky.graph.listitem",
+		CreatedAt:     time.Now().Local().Format(time.RFC3339),
+		List:          listURI,
+		Subject:       subjectDid,
+	}
+
+	//block := bsky.GraphBlock{
+	//	LexiconTypeID: "app.bsky.graph.block",
+	//	CreatedAt:     time.Now().Local().Format(time.RFC3339),
+	//	Subject:       profile.Did,
+	//}
+
+	itemResp, err := comatproto.RepoCreateRecord(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
+		Collection: "app.bsky.graph.listitem",
+		Repo:       client.Auth.Did,
+		Record: &lexutil.LexiconTypeDecoder{
+			Val: &item,
+		},
+	})
+	log := zapr.NewLogger(zap.L())
+	log.Info("List item record created", "item", itemResp)
+
+	return errors.Wrapf(err, "Failed to add subject to list: %s", listURI)
+}
+
+//func MutateList(client *xrpc.Client, listRef string) error {
+//	cursor := ""
+//	limit := int64(100)
+//	list, err := bsky.GraphGetList(context.Background(), client, cursor, limit, listRef)
+//
+//	if err != nil {
+//		return errors.Wrapf(err, "Failed to fetch list: %s", listRef)
+//	}
+//
+//	itemResp, err := comatproto.RepoPutRecord(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
+//		Collection: "app.bsky.graph.listitem",
+//		Repo:       client.Auth.Did,
+//		Record: &lexutil.LexiconTypeDecoder{
+//			Val: &item,
+//		},
+//	})
+//}

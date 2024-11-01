@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+const (
+	// My did for testing purposes
+	jeremyLewiDid = "did:plc:5lwweotr4gfb7bbz2fqwdthf"
+)
+
 func Test_GetStarterPackOutput(t *testing.T) {
 	// Verify the GoLang struct is correct by trying to deserialize some JSON
 	// The JSON was obtained by making a client.Do request with a *bytes.Buffer for the output
@@ -33,7 +38,8 @@ func Test_GetStarterPacks(t *testing.T) {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
 	// SHould be Chris Albon who has a starter pack
-	actor := "did:plc:umpsiyampiq3bpgce7kigydz"
+	// actor := "did:plc:umpsiyampiq3bpgce7kigydz"
+	actor := jeremyLewiDid
 
 	out, err := GetStarterPacks(stuff.Client, actor)
 	if err != nil {
