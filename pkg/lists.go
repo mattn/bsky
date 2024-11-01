@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	referenceListPurpose = "app.bsky.graph.defs#referencelist"
+)
+
 // ListRecord struct to represent the list record structure
 type ListRecord struct {
 	Type        string    `json:"$type"`
@@ -23,6 +27,14 @@ type ListRecord struct {
 type User struct {
 	DID string `json:"did"`
 }
+
+//
+//func GetList(client *xrpc.Client, listAtRef string) {
+//	//TODO(jeremy): Support the cursor?
+//	cursor := ""
+//	limit := int64(100)
+//	bsky.GraphGetList(context.Background(), client, cursor, limit, listAtRef)
+//}
 
 // CreateListRecord sends a request to the PDS server to create a list record.
 func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
@@ -38,7 +50,7 @@ func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
 		CreatedAt:     time.Now().Local().Format(time.RFC3339),
 		Name:          "TestList",
 		Description:   &description,
-		Purpose:       &description,
+		Purpose:       StringPtr(referenceListPurpose),
 	}
 
 	//block := bsky.GraphBlock{
@@ -55,9 +67,36 @@ func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
 		},
 	})
 
+	fmt.Printf("List record created:\n%v", resp)
+
 	if err != nil {
 		return err
 	}
-	fmt.Printf("List record created:\n%v", resp)
+
+	item := bsky.GraphListitem{
+		LexiconTypeID: "app.bsky.graph.listitem",
+		CreatedAt:     time.Now().Local().Format(time.RFC3339),
+		List:          resp.Uri,
+		Subject:       "did:plc:umpsiyampiq3bpgce7kigydz",
+	}
+
+	//block := bsky.GraphBlock{
+	//	LexiconTypeID: "app.bsky.graph.block",
+	//	CreatedAt:     time.Now().Local().Format(time.RFC3339),
+	//	Subject:       profile.Did,
+	//}
+
+	itemResp, err := comatproto.RepoCreateRecord(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
+		Collection: "app.bsky.graph.listitem",
+		Repo:       client.Auth.Did,
+		Record: &lexutil.LexiconTypeDecoder{
+			Val: &item,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("List item record created:\n%v", itemResp)
 	return nil
 }

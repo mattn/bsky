@@ -119,6 +119,10 @@ func Stringp(s *string) string {
 	return *s
 }
 
+func StringPtr(s string) *string {
+	return &s
+}
+
 func MakeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 	cfg := cCtx.App.Metadata["Config"].(*Config)
 
