@@ -362,7 +362,7 @@ func doBlock(cCtx *cli.Context) error {
 			return fmt.Errorf("cannot get profile: %w", err)
 		}
 
-		block := bsky.GraphBlock{
+		block := bsky.GraphList{
 			LexiconTypeID: "app.bsky.graph.block",
 			CreatedAt:     time.Now().Local().Format(time.RFC3339),
 			Subject:       profile.Did,
