@@ -11,8 +11,10 @@ var (
 
 // AccountList is a data structure to hold a list of folks to follow
 type AccountList struct {
-	APIVersion string `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string `json:"kind" yaml:"kind"`
+	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string   `json:"kind" yaml:"kind"`
+	Metadata   Metadata `json:"metadata" yaml:"metadata"`
+
 	// DID is the Decentralized Identifier for the list
 	// TOOD(jeremy):
 	DID      string    `json:"did" yaml:"did"`

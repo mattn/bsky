@@ -12,12 +12,12 @@ import (
 	"os"
 )
 
-// NewApplyCmd create an apply command
-func NewApplyCmd() *cobra.Command {
+// NewTidyCmd creates a command to tidy the resource
+func NewTidyCmd() *cobra.Command {
 	// TODO(jeremy): We should update apply to support the image resource.
-	applyCmd := &cobra.Command{
-		Use:   "apply <resource.yaml> <resourceDir> <resource.yaml> ...",
-		Short: "Apply the specified resource.",
+	cmd := &cobra.Command{
+		Use:   "tidy <resource.yaml>",
+		Short: "Tidy one or more resource files",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := func() error {
 				app := application.NewApp()
@@ -38,8 +38,7 @@ func NewApplyCmd() *cobra.Command {
 				if err := app.SetupRegistry(); err != nil {
 					return err
 				}
-
-				return app.ApplyPaths(context.Background(), args)
+				return app.TidyPaths(context.Background(), args)
 			}()
 			if err != nil {
 				fmt.Printf("Error running apply;\n %+v\n", err)
@@ -48,5 +47,5 @@ func NewApplyCmd() *cobra.Command {
 		},
 	}
 
-	return applyCmd
+	return cmd
 }

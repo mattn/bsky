@@ -12,6 +12,10 @@ type AccountListController struct {
 	client *xrpc.Client
 }
 
+func (c *AccountListController) TidyNode(ctx context.Context, node *yaml.RNode) (*yaml.RNode, error) {
+	return node, nil
+}
+
 func NewAccountListController(client *xrpc.Client) (*AccountListController, error) {
 	return &AccountListController{
 		client: client,

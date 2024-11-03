@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 	"strings"
 )
 
@@ -107,6 +108,14 @@ func (a *App) SetupRegistry() error {
 		return err
 	}
 
+	feedController, err := lists.NewFeedController()
+	if err != nil {
+		return err
+	}
+	if err := a.Registry.Register(v1alpha1.FeedGVK, feedController); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -128,6 +137,32 @@ func (a *App) ApplyPaths(ctx context.Context, inPaths []string) error {
 
 	for _, path := range paths {
 		err := a.apply(ctx, path)
+		if err != nil {
+			log.Error(err, "Apply failed", "path", path)
+		}
+	}
+
+	return nil
+}
+
+// TidyPaths applies the resources in the specified paths.
+// Paths can be files or directories.
+func (a *App) TidyPaths(ctx context.Context, inPaths []string) error {
+	log := util.LogFromContext(ctx)
+
+	paths := make([]string, 0, len(inPaths))
+	for _, resourcePath := range inPaths {
+		newPaths, err := util.FindYamlFiles(resourcePath)
+		if err != nil {
+			log.Error(err, "Failed to find YAML files", "path", resourcePath)
+			return err
+		}
+
+		paths = append(paths, newPaths...)
+	}
+
+	for _, path := range paths {
+		err := a.tidy(ctx, path)
 		if err != nil {
 			log.Error(err, "Apply failed", "path", path)
 		}
@@ -179,6 +214,57 @@ func (a *App) apply(ctx context.Context, path string) error {
 		return nil
 	}
 	allErrors.Final = fmt.Errorf("failed to apply one or more resources")
+	return allErrors
+}
+
+func (a *App) tidy(ctx context.Context, path string) error {
+	if a.Registry == nil {
+		return errors.New("Registry is nil; call SetupRegistry first")
+	}
+
+	log := zapr.NewLogger(zap.L())
+	log.Info("Reading file", "path", path)
+	rNodes, err := util.ReadYaml(path)
+	if err != nil {
+		return err
+	}
+
+	allErrors := &helpers.ListOfErrors{
+		Causes: []error{},
+	}
+
+	for _, n := range rNodes {
+		m, err := n.GetMeta()
+		if err != nil {
+			log.Error(err, "Failed to get metadata", "n", n)
+			continue
+		}
+		log.Info("Read resource", "meta", m)
+
+		gvk := schema.FromAPIVersionAndKind(m.APIVersion, m.Kind)
+		controller, err := a.Registry.GetController(gvk)
+		if err != nil {
+			log.Error(err, "Unsupported kind", "gvk", gvk)
+			allErrors.AddCause(err)
+			continue
+		}
+
+		n, err = controller.TidyNode(ctx, n)
+		if err != nil {
+			log.Error(err, "Failed to tidy resource", "name", m.Name, "namespace", m.Namespace, "gvk", gvk)
+			allErrors.AddCause(err)
+		}
+
+		if err := yaml.WriteFile(n, path); err != nil {
+			log.Error(err, "Failed to write resource", "name", m.Name, "namespace", m.Namespace, "gvk", gvk, "path", path)
+			allErrors.AddCause(err)
+		}
+	}
+
+	if len(allErrors.Causes) == 0 {
+		return nil
+	}
+	allErrors.Final = fmt.Errorf("failed to tidy one or more resources")
 	return allErrors
 }
 

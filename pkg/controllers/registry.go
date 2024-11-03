@@ -14,6 +14,9 @@ import (
 type Controller interface {
 	// ReconcileNode reconciles the state of the resource.
 	ReconcileNode(ctx context.Context, node *yaml.RNode) error
+
+	// TidyNode tidies up the resource.
+	TidyNode(ctx context.Context, node *yaml.RNode) (*yaml.RNode, error)
 }
 
 // Registry is a registry of all the controllers.
