@@ -346,42 +346,42 @@ func doFollowers(cCtx *cli.Context) error {
 	return nil
 }
 
-func doBlock(cCtx *cli.Context) error {
-	if !cCtx.Args().Present() {
-		return cli.ShowSubcommandHelp(cCtx)
-	}
-
-	xrpcc, err := pkg.MakeXRPCC(cCtx)
-	if err != nil {
-		return fmt.Errorf("cannot create client: %w", err)
-	}
-
-	for _, arg := range cCtx.Args().Slice() {
-		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-		if err != nil {
-			return fmt.Errorf("cannot get profile: %w", err)
-		}
-
-		block := bsky.GraphList{
-			LexiconTypeID: "app.bsky.graph.block",
-			CreatedAt:     time.Now().Local().Format(time.RFC3339),
-			Subject:       profile.Did,
-		}
-
-		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-			Collection: "app.bsky.graph.block",
-			Repo:       xrpcc.Auth.Did,
-			Record: &lexutil.LexiconTypeDecoder{
-				Val: &block,
-			},
-		})
-		if err != nil {
-			return err
-		}
-		fmt.Println(resp.Uri)
-	}
-	return nil
-}
+//func doBlock(cCtx *cli.Context) error {
+//	if !cCtx.Args().Present() {
+//		return cli.ShowSubcommandHelp(cCtx)
+//	}
+//
+//	xrpcc, err := pkg.MakeXRPCC(cCtx)
+//	if err != nil {
+//		return fmt.Errorf("cannot create client: %w", err)
+//	}
+//
+//	for _, arg := range cCtx.Args().Slice() {
+//		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+//		if err != nil {
+//			return fmt.Errorf("cannot get profile: %w", err)
+//		}
+//
+//		block := bsky.GraphList{
+//			LexiconTypeID: "app.bsky.graph.block",
+//			CreatedAt:     time.Now().Local().Format(time.RFC3339),
+//			Subject:       profile.Did,
+//		}
+//
+//		resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+//			Collection: "app.bsky.graph.block",
+//			Repo:       xrpcc.Auth.Did,
+//			Record: &lexutil.LexiconTypeDecoder{
+//				Val: &block,
+//			},
+//		})
+//		if err != nil {
+//			return err
+//		}
+//		fmt.Println(resp.Uri)
+//	}
+//	return nil
+//}
 
 func doUnblock(cCtx *cli.Context) error {
 	if !cCtx.Args().Present() {
