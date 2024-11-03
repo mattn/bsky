@@ -8,6 +8,7 @@ import (
 	"github.com/bluesky-social/indigo/api/bsky"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/xrpc"
+	"github.com/jlewi/bsctl/pkg/api/v1alpha1"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -16,17 +17,6 @@ import (
 	"strings"
 	"time"
 )
-
-// FollowList is a data structure to hold a list of folks to follow
-type FollowList struct {
-	APIVersion string    `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string    `json:"kind" yaml:"kind"`
-	Accounts   []Account `json:"accounts" yaml:"accounts"`
-}
-
-type Account struct {
-	Handle string `json:"handle" yaml:"handle"`
-}
 
 func DoFollows(client *xrpc.Client, handle string, w io.Writer) error {
 	var cursor string
@@ -72,9 +62,9 @@ func DoFollow(client *xrpc.Client, filePath string, w io.Writer) error {
 			return errors.Wrapf(err, "cannot read file %s", filePath)
 		}
 	}
-	list := &FollowList{}
+	list := &v1alpha1.AccountList{}
 	if err := yaml.Unmarshal(fContents, &list); err != nil {
-		return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
+		return errors.Wrapf(err, "cannot unmarshal AccountList from file %s", filePath)
 	}
 
 	for _, a := range list.Accounts {

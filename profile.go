@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/jlewi/bsctl/pkg"
+	"github.com/jlewi/bsctl/pkg/api/v1alpha1"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -209,9 +210,9 @@ func doFollow(cCtx *cli.Context) error {
 				return errors.Wrapf(err, "cannot read file %s", filePath)
 			}
 		}
-		list := &pkg.FollowList{}
+		list := &v1alpha1.AccountList{}
 		if err := yaml.Unmarshal(fContents, &list); err != nil {
-			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", filePath)
+			return errors.Wrapf(err, "cannot unmarshal AccountList from file %s", filePath)
 		}
 
 		for _, a := range list.Accounts {
@@ -351,7 +352,7 @@ func doFollowers(cCtx *cli.Context) error {
 //		return cli.ShowSubcommandHelp(cCtx)
 //	}
 //
-//	xrpcc, err := pkg.MakeXRPCC(cCtx)
+//	xrpcc, err := pkg.CreateClient(cCtx)
 //	if err != nil {
 //		return fmt.Errorf("cannot create client: %w", err)
 //	}

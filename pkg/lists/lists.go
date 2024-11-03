@@ -1,4 +1,4 @@
-package pkg
+package lists
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/go-logr/zapr"
+	"github.com/jlewi/bsctl/pkg"
+	"github.com/jlewi/bsctl/pkg/api/v1alpha1"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"sort"
@@ -55,8 +57,8 @@ func CreateListRecord(client *xrpc.Client, name string, description string) (*co
 		LexiconTypeID: "app.bsky.graph.list",
 		CreatedAt:     time.Now().Local().Format(time.RFC3339),
 		Name:          name,
-		Description:   StringPtr(description),
-		Purpose:       StringPtr(referenceListPurpose),
+		Description:   pkg.StringPtr(description),
+		Purpose:       pkg.StringPtr(referenceListPurpose),
 	}
 
 	//block := bsky.GraphBlock{
@@ -124,7 +126,7 @@ func CreateListRecord(client *xrpc.Client, name string, description string) (*co
 //	return resp, nil
 //}
 
-func AddAllToList(client *xrpc.Client, listURI string, source FollowList) error {
+func AddAllToList(client *xrpc.Client, listURI string, source v1alpha1.AccountList) error {
 	log := zapr.NewLogger(zap.L())
 	for _, h := range source.Accounts {
 		profile, err := bsky.ActorGetProfile(context.TODO(), client, h.Handle)
@@ -192,7 +194,7 @@ func AddToList(client *xrpc.Client, listURI string, subjectDid string) error {
 //}
 
 // MergeFollowLists computes the union of two lists
-func MergeFollowLists(dest *FollowList, src FollowList) {
+func MergeFollowLists(dest *v1alpha1.AccountList, src v1alpha1.AccountList) {
 	// Use a map to store unique strings from both lists
 	uniqueStrings := make(map[string]bool)
 
@@ -215,9 +217,9 @@ func MergeFollowLists(dest *FollowList, src FollowList) {
 	// Sort the result slice
 	sort.Strings(result)
 
-	dest.Accounts = make([]Account, 0, len(result))
+	dest.Accounts = make([]v1alpha1.Account, 0, len(result))
 	for _, item := range result {
-		dest.Accounts = append(dest.Accounts, Account{Handle: item})
+		dest.Accounts = append(dest.Accounts, v1alpha1.Account{Handle: item})
 	}
 
 }

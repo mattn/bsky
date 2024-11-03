@@ -1,4 +1,4 @@
-BIN := bsky
+BIN := bsctl
 ifeq ($(OS),Windows_NT)
 BIN := $(BIN).exe
 endif
@@ -14,17 +14,18 @@ GIT_SHA_SHORT := $(shell git rev-parse --short HEAD)
 DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION := $(shell git describe --tags)-$(GIT_SHA_SHORT)
 LDFLAGS := -s -w \
-        -X 'github.com/jlewi/bsctl/pkg.Date=$(DATE)' \
-        -X 'github.com/jlewi/bsctl/pkg.Version=$(subst v,,$(VERSION))' \
-        -X 'github.com/jlewi/bsctl/pkg.Commit=$(GIT_SHA)' \
-		-X 'github.com/jlewi/bsctl/pkg.BuiltBy=$(GIT_SHA)'
+        -X 'github.com/jlewi/bsctl/pkg/version.Date=$(DATE)' \
+        -X 'github.com/jlewi/bsctl/pkg/version.Version=$(subst v,,$(VERSION))' \
+        -X 'github.com/jlewi/bsctl/pkg/version.Commit=$(GIT_SHA)' \
+		-X 'github.com/jlewi/bsctl/pkg/version.BuiltBy=$(GIT_SHA)'
 
 .PHONY: all
 all: clean build
 
 .PHONY: build
 build:
-	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) .
+	mkdir -p .build
+	go build -ldflags="$(LDFLAGS)" -o .build/$(BIN) .
 
 .PHONY: pwa
 pwa:

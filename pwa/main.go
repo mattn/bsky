@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/go-logr/zapr"
 	"github.com/jlewi/bsctl/pkg"
+	"github.com/jlewi/bsctl/pkg/application"
+	"github.com/jlewi/bsctl/pkg/version"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -24,7 +26,7 @@ type CommandApp struct {
 	app.Compo
 	commands []string
 	input    string
-	manager  *pkg.XRPCManager
+	manager  *application.XRPCManager
 }
 
 func (a *CommandApp) Render() app.UI {
@@ -104,9 +106,9 @@ func (a *CommandApp) Render() app.UI {
 					Style("color", "#666").
 					Style("font-size", "12px").
 					Body(
-						app.Div().Text("version: "+pkg.Version),
-						app.Div().Text("commit: "+pkg.Commit),
-						app.Div().Text("buildDate: "+pkg.Date),
+						app.Div().Text("version: "+version.Version),
+						app.Div().Text("commit: "+version.Commit),
+						app.Div().Text("buildDate: "+version.Date),
 					),
 				// Right-aligned links
 				app.Div().
@@ -271,7 +273,7 @@ func (a *CommandApp) handleFollow(ctx app.Context) error {
 		return err
 	}
 
-	client, err := m.MakeXRPCC(context.Background())
+	client, err := m.CreateClient(context.Background())
 	if err != nil {
 		return err
 	}
@@ -302,7 +304,7 @@ func (a *CommandApp) handleFollows(ctx app.Context) error {
 		return err
 	}
 
-	client, err := m.MakeXRPCC(context.Background())
+	client, err := m.CreateClient(context.Background())
 	if err != nil {
 		return err
 	}
@@ -336,7 +338,7 @@ func (a *CommandApp) getConfig(ctx app.Context) (*pkg.Config, error) {
 	return cfg, nil
 }
 
-func (a *CommandApp) getXRPCManager(ctx app.Context) (*pkg.XRPCManager, error) {
+func (a *CommandApp) getXRPCManager(ctx app.Context) (*application.XRPCManager, error) {
 	if a.manager != nil {
 		return a.manager, nil
 	}
@@ -357,8 +359,8 @@ func (a *CommandApp) getXRPCManager(ctx app.Context) (*pkg.XRPCManager, error) {
 		return nil, errors.New("password not set. Run config set password=password to set it")
 	}
 
-	m := pkg.XRPCManager{
-		AuthManager: &pkg.AuthLocalStorage{
+	m := application.XRPCManager{
+		AuthManager: &application.AuthLocalStorage{
 			Ctx: ctx,
 		},
 		Config: cfg,
@@ -392,7 +394,7 @@ func main() {
 
 	// Register the root component.
 	bucketName := "/bsctl"
-	pkg.LogVersion()
+	version.LogVersion()
 	// N.B. if we run it locally we will serve it on "/"
 	// But when we run it on GCS we will serve it on the bucket name. so we add a second route
 	log.Info("Registering path", "path", "/")

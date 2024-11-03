@@ -17,6 +17,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/urfave/cli/v2 v2.27.2
 	gopkg.in/yaml.v3 v3.0.1
+	k8s.io/apimachinery v0.26.1
 	sigs.k8s.io/kustomize/kyaml v0.13.9
 )
 

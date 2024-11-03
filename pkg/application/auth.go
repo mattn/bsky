@@ -1,4 +1,4 @@
-package pkg
+package application
 
 import (
 	"encoding/json"

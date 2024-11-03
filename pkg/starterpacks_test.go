@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/jlewi/bsctl/pkg/api/v1alpha1"
+	"github.com/jlewi/bsctl/pkg/lists"
+	"github.com/jlewi/bsctl/pkg/testutil"
 	"github.com/jlewi/monogo/helpers"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -44,7 +47,7 @@ func Test_GetStarterPacks(t *testing.T) {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
 	}
 
-	stuff, err := testSetup()
+	stuff, err := testutil.testSetup()
 	if err != nil {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
@@ -67,7 +70,7 @@ func Test_SyncStarterPackToFile(t *testing.T) {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
 	}
 
-	stuff, err := testSetup()
+	stuff, err := testutil.testSetup()
 	if err != nil {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
@@ -95,9 +98,9 @@ func Test_SyncStarterPackToFile(t *testing.T) {
 		}
 
 		node := nodes[0]
-		dest := &FollowList{}
+		dest := &v1alpha1.AccountList{}
 		if err := node.YNode().Decode(dest); err != nil {
-			return errors.Wrapf(err, "cannot unmarshal FollowList from file %s", sourceFile)
+			return errors.Wrapf(err, "cannot unmarshal AccountList from file %s", sourceFile)
 		}
 
 		output, err := DumpStarterPack(stuff.Client, handle, startPackName)
@@ -105,11 +108,11 @@ func Test_SyncStarterPackToFile(t *testing.T) {
 			return err
 		}
 
-		MergeFollowLists(dest, *output)
+		lists.MergeFollowLists(dest, *output)
 
 		outB, err := yaml.Marshal(dest)
 		if err != nil {
-			return errors.Wrapf(err, "cannot marshal FollowList to file %s", sourceFile)
+			return errors.Wrapf(err, "cannot marshal AccountList to file %s", sourceFile)
 		}
 
 		if err := os.WriteFile(sourceFile, outB, 0644); err != nil {

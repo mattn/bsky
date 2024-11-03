@@ -8,6 +8,7 @@ import (
 	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/go-logr/zapr"
+	"github.com/jlewi/bsctl/pkg/api/v1alpha1"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"net/http"
@@ -133,7 +134,7 @@ func GetStarterPacks(client *xrpc.Client, actor string) (GetStarterPacks_Output,
 }
 
 // DumpStarterPack dumps all the users in a starter pack
-func DumpStarterPack(client *xrpc.Client, actor string, name string) (*FollowList, error) {
+func DumpStarterPack(client *xrpc.Client, actor string, name string) (*v1alpha1.AccountList, error) {
 	out, err := GetStarterPacks(client, actor)
 	if err != nil {
 		return nil, err
@@ -154,8 +155,8 @@ func DumpStarterPack(client *xrpc.Client, actor string, name string) (*FollowLis
 	// Get the list
 	cursor := ""
 
-	result := &FollowList{
-		Accounts: make([]Account, 0),
+	result := &v1alpha1.AccountList{
+		Accounts: make([]v1alpha1.Account, 0),
 	}
 	for {
 		output, err := bsky.GraphGetList(context.Background(), client, cursor, 100, starterPack.Record.List)
@@ -164,7 +165,7 @@ func DumpStarterPack(client *xrpc.Client, actor string, name string) (*FollowLis
 		}
 
 		for _, item := range output.Items {
-			result.Accounts = append(result.Accounts, Account{Handle: item.Subject.Handle})
+			result.Accounts = append(result.Accounts, v1alpha1.Account{Handle: item.Subject.Handle})
 		}
 
 		if output.Cursor == nil {

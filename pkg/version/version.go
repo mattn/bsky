@@ -1,4 +1,4 @@
-package pkg
+package version
 
 import (
 	"github.com/go-logr/zapr"
@@ -12,7 +12,7 @@ var (
 	BuiltBy = "unknown"
 )
 
-func LogVersion() {
+func Log() {
 	log := zapr.NewLogger(zap.L())
 	log.Info("binary version", "version", Version, "commit", Commit, "date", Date, "builtBy", BuiltBy)
 }

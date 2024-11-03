@@ -1,10 +1,11 @@
-package pkg
+package e2etests
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/bluesky-social/indigo/api/bsky"
-	"gopkg.in/yaml.v3"
+	"github.com/jlewi/bsctl/pkg/lists"
+	"github.com/jlewi/bsctl/pkg/testutil"
 	"os"
 	"testing"
 )
@@ -13,12 +14,14 @@ const (
 	chrisAlbonDid = "did:plc:umpsiyampiq3bpgce7kigydz"
 )
 
+// N.B. Manual tests need to be in a subpackage to avoid circular dependencies because we reuse the app class.
+
 func Test_GetList(t *testing.T) {
 	if os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
 	}
 
-	stuff, err := testSetup()
+	stuff, err := testutil.New()
 	if err != nil {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
@@ -53,7 +56,7 @@ func Test_AddToStarterPackList(t *testing.T) {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
 	}
 
-	stuff, err := testSetup()
+	stuff, err := testutil.New()
 	if err != nil {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
@@ -61,7 +64,7 @@ func Test_AddToStarterPackList(t *testing.T) {
 	// This is the list associated with my platform engineering starter pack
 	listRef := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7u5daz2qa2w"
 
-	if err := AddToList(stuff.Client, listRef, chrisAlbonDid); err != nil {
+	if err := lists.AddToList(stuff.Client, listRef, chrisAlbonDid); err != nil {
 		t.Fatalf("AddToList returned error: %+v", err)
 	}
 }
@@ -71,7 +74,7 @@ func Test_CreateList(t *testing.T) {
 		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
 	}
 
-	stuff, err := testSetup()
+	stuff, err := testutil.New()
 	if err != nil {
 		t.Fatalf("testSetup() = %v, wanted nil", err)
 	}
@@ -81,39 +84,8 @@ func Test_CreateList(t *testing.T) {
 	// Try setting it to the host for my PDS
 	// that didn't work
 	//stuff.Client.Host = "https://morel.us-east.host.bsky.network"
-	_, err = CreateListRecord(stuff.Client, "AI Engineering Community", "List of members of the AIEngineering community. Used for the feed")
+	_, err = lists.CreateListRecord(stuff.Client, "AI Engineering Community", "List of members of the AIEngineering community. Used for the feed")
 	if err != nil {
 		t.Fatalf("CreateListRecord() = %v, wanted nil", err)
-	}
-}
-
-func Test_AddAllToList(t *testing.T) {
-	if os.Getenv("GITHUB_ACTIONS") != "" {
-		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
-	}
-
-	stuff, err := testSetup()
-	if err != nil {
-		t.Fatalf("testSetup() = %v, wanted nil", err)
-	}
-
-	//sourceFile := "/Users/jlewi/git_bskylists/platformengineering.yaml"
-	//listUri := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7yx65zcse25"
-
-	sourceFile := "/Users/jlewi/git_bskylists/aiengineering.yaml"
-	listUri := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7z42fommh2l"
-
-	raw, err := os.ReadFile(sourceFile)
-	if err != nil {
-		t.Fatalf("Failed to read file; %v; error %+v", sourceFile, err)
-	}
-
-	followList := &FollowList{}
-	if err := yaml.Unmarshal(raw, followList); err != nil {
-		t.Fatalf("Failed to unmarshal follow list; %v; error %+v", sourceFile, err)
-	}
-
-	if err := AddAllToList(stuff.Client, listUri, *followList); err != nil {
-		t.Fatalf("AddAllToList returned error: %+v", err)
 	}
 }

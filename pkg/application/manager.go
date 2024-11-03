@@ -1,4 +1,4 @@
-package pkg
+package application
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/bluesky-social/indigo/util/cliutil"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/go-logr/zapr"
+	"github.com/jlewi/bsctl/pkg/config"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -14,11 +15,25 @@ import (
 // XRPCManager is a struct that manages XRPC connections and requests.
 type XRPCManager struct {
 	AuthManager AuthManager
-	Config      *Config
+	Config      *config.Config
 }
 
-func (m *XRPCManager) MakeXRPCC(ctx context.Context) (*xrpc.Client, error) {
+// CreateClient creates a new XRPC client. It fetches credentials if needed.
+// Credentials are persisted using the AuthManager.
+func (m *XRPCManager) CreateClient(ctx context.Context) (*xrpc.Client, error) {
 	log := zapr.NewLogger(zap.L())
+
+	if m.Config.Host == "" {
+		return nil, errors.New("host not set")
+	}
+
+	if m.Config.Handle == "" {
+		return nil, errors.New("handle not set")
+	}
+
+	if m.Config.Password == "" {
+		return nil, errors.New("password not set")
+	}
 
 	log.Info("Creating XRPC Client")
 	xrpcc := &xrpc.Client{

@@ -1,28 +1,19 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
+	"io/fs"
 	"os"
-)
-
-package config
-
-import (
-"encoding/json"
-"fmt"
-"github.com/go-logr/zapr"
-"github.com/pkg/errors"
-"github.com/spf13/cobra"
-"github.com/spf13/viper"
-"go.uber.org/zap"
-"gopkg.in/yaml.v3"
-"io/fs"
-"os"
-"os/user"
-"path/filepath"
-"strings"
+	"os/user"
+	"path/filepath"
+	"strings"
 )
 
 // Note: The application uses viper for configuration management. Viper merges configurations from various sources
@@ -31,7 +22,7 @@ import (
 const (
 	ConfigFlagName = "config"
 	LevelFlagName  = "level"
-	AppName        = "somegoapp"
+	AppName        = "bsctl"
 	ConfigDir      = "." + AppName
 )
 
@@ -55,10 +46,13 @@ type Config struct {
 	APIVersion string `json:"apiVersion" yaml:"apiVersion" yamltags:"required"`
 	Kind       string `json:"kind" yaml:"kind" yamltags:"required"`
 
-	Logging   Logging          `json:"logging" yaml:"logging"`
-	Telemetry *TelemetryConfig `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
+	Logging Logging `json:"logging" yaml:"logging"`
 
-	SomeOption string `json:"someOption,omitempty" yaml:"someOption,omitempty"`
+	Bgs      string `json:"bgs" yaml:"bgs"`
+	Host     string `json:"host" yaml:"host"`
+	Handle   string `json:"handle" yaml:"handle"`
+	Password string `json:"password" yaml:"password"`
+	Prefix   string `json:"prefix" yaml:"prefix"`
 
 	// configFile is the configuration file used
 	configFile string
@@ -76,15 +70,6 @@ type LogSink struct {
 	// Path is the path to write logs to. Use "stderr" to write to stderr.
 	// Use gcplogs:///projects/${PROJECT}/logs/${LOGNAME} to write to Google Cloud Logging
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
-}
-
-type TelemetryConfig struct {
-	Honeycomb *HoneycombConfig `json:"honeycomb,omitempty" yaml:"honeycomb,omitempty"`
-}
-
-type HoneycombConfig struct {
-	// APIKeyFile is the Honeycomb API key
-	APIKeyFile string `json:"apiKeyFile" yaml:"apiKeyFile"`
 }
 
 func (c *Config) GetLogLevel() string {
@@ -113,23 +98,15 @@ func (c *Config) GetConfigDir() string {
 	return binHome()
 }
 
+// GetAuthFile returns the file to persist auth information to
+func (c *Config) GetAuthFile() string {
+	return filepath.Join(c.GetConfigDir(), c.Handle+".auth.json")
+}
+
 // IsValid validates the configuration and returns any errors.
 func (c *Config) IsValid() []string {
 	problems := make([]string, 0, 1)
 	return problems
-}
-
-func (c *Config) UseHoneycomb() bool {
-	if c.Telemetry == nil {
-		return false
-	}
-	if c.Telemetry.Honeycomb == nil {
-		return false
-	}
-	if c.Telemetry.Honeycomb.APIKeyFile == "" {
-		return false
-	}
-	return true
 }
 
 // DeepCopy returns a deep copy.
@@ -181,8 +158,8 @@ func InitViperInstance(v *viper.Viper, cmd *cobra.Command) error {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv() // read in environment variables that match
 
-	// TODO: Set any default values here
-
+	v.SetDefault("host", "https://bsky.social")
+	v.SetDefault("bgs", "https://bsky.social")
 	// We need to attach to the command line flag if it was specified.
 	keyToflagName := map[string]string{
 		ConfigFlagName:             ConfigFlagName,
@@ -290,4 +267,3 @@ func (c *Config) Write(cfgFile string) error {
 func DefaultConfigFile() string {
 	return binHome() + "/config.yaml"
 }
-
