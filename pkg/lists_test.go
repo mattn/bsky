@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bluesky-social/indigo/api/bsky"
+	"gopkg.in/yaml.v3"
 	"os"
 	"testing"
-	"time"
 )
 
 const (
@@ -78,23 +78,42 @@ func Test_CreateList(t *testing.T) {
 	// SHould be Chris Albon
 	//actor := "did:plc:umpsiyampiq3bpgce7kigydz"
 
-	listRecord := &ListRecord{
-		Type:        "app.bsky.graph.list",
-		CreatedAt:   time.Now().UTC(),
-		Name:        "Test programmatically creating a list",
-		Description: "A list of developers you might want to follow",
-		Users: []User{
-			{DID: "did:example:123"},
-			{DID: "did:example:456"},
-			{DID: "did:example:789"},
-		},
-	}
-
 	// Try setting it to the host for my PDS
 	// that didn't work
 	//stuff.Client.Host = "https://morel.us-east.host.bsky.network"
-	err = CreateListRecord(stuff.Client, listRecord)
+	_, err = CreateListRecord(stuff.Client, "AI Engineering Community", "List of members of the AIEngineering community. Used for the feed")
 	if err != nil {
 		t.Fatalf("CreateListRecord() = %v, wanted nil", err)
+	}
+}
+
+func Test_AddAllToList(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") != "" {
+		t.Skipf("Test_StarterPacks is a manual test that is skipped in CICD")
+	}
+
+	stuff, err := testSetup()
+	if err != nil {
+		t.Fatalf("testSetup() = %v, wanted nil", err)
+	}
+
+	//sourceFile := "/Users/jlewi/git_bskylists/platformengineering.yaml"
+	//listUri := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7yx65zcse25"
+
+	sourceFile := "/Users/jlewi/git_bskylists/aiengineering.yaml"
+	listUri := "at://did:plc:5lwweotr4gfb7bbz2fqwdthf/app.bsky.graph.list/3l7z42fommh2l"
+
+	raw, err := os.ReadFile(sourceFile)
+	if err != nil {
+		t.Fatalf("Failed to read file; %v; error %+v", sourceFile, err)
+	}
+
+	followList := &FollowList{}
+	if err := yaml.Unmarshal(raw, followList); err != nil {
+		t.Fatalf("Failed to unmarshal follow list; %v; error %+v", sourceFile, err)
+	}
+
+	if err := AddAllToList(stuff.Client, listUri, *followList); err != nil {
+		t.Fatalf("AddAllToList returned error: %+v", err)
 	}
 }

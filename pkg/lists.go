@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"sort"
 	"time"
 )
 
@@ -40,19 +41,21 @@ type User struct {
 //}
 
 // CreateListRecord sends a request to the PDS server to create a list record.
-func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
+//
+// TODO(jeremy): How should we check if a list of the given name already exists?
+func CreateListRecord(client *xrpc.Client, name string, description string) (*comatproto.RepoCreateRecord_Output, error) {
 	//var out bytes.Buffer
 	//if err := client.Do(context.Background(), xrpc.Procedure, "", "app.bsky.graph.list", nil, record, &out); err != nil {
 	//	return err
 	//}
+	log := zapr.NewLogger(zap.L())
 
-	description := "Test programmatically creating a list"
 	// I think we need to create a list and then we create GraphListItem
 	block := bsky.GraphList{
 		LexiconTypeID: "app.bsky.graph.list",
 		CreatedAt:     time.Now().Local().Format(time.RFC3339),
-		Name:          "TestList",
-		Description:   &description,
+		Name:          name,
+		Description:   StringPtr(description),
 		Purpose:       StringPtr(referenceListPurpose),
 	}
 
@@ -70,38 +73,76 @@ func CreateListRecord(client *xrpc.Client, record *ListRecord) error {
 		},
 	})
 
-	fmt.Printf("List record created:\n%v", resp)
-
 	if err != nil {
-		return err
+		log.Error(err, "Failed to create list record")
+		return nil, err
 	}
 
-	item := bsky.GraphListitem{
-		LexiconTypeID: "app.bsky.graph.listitem",
-		CreatedAt:     time.Now().Local().Format(time.RFC3339),
-		List:          resp.Uri,
-		Subject:       "did:plc:umpsiyampiq3bpgce7kigydz",
+	log.Info("List record created", "record", resp)
+
+	return resp, nil
+}
+
+//func GetList(client *xrpc.Client, listUri string) (*comatproto.RepoCreateRecord_Output, error) {
+//	//var out bytes.Buffer
+//	//if err := client.Do(context.Background(), xrpc.Procedure, "", "app.bsky.graph.list", nil, record, &out); err != nil {
+//	//	return err
+//	//}
+//	log := zapr.NewLogger(zap.L())
+//
+//	//// I think we need to create a list and then we create GraphListItem
+//	//block := bsky.GraphList{
+//	//	LexiconTypeID: "app.bsky.graph.list",
+//	//	CreatedAt:     time.Now().Local().Format(time.RFC3339),
+//	//	Name:          name,
+//	//	Description:   StringPtr(description),
+//	//	Purpose:       StringPtr(referenceListPurpose),
+//	//}
+//
+//	//block := bsky.GraphBlock{
+//	//	LexiconTypeID: "app.bsky.graph.block",
+//	//	CreatedAt:     time.Now().Local().Format(time.RFC3339),
+//	//	Subject:       profile.Did,
+//	//}
+//
+//	bsky.GraphGetList()
+//	resp, err := comatproto.G(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
+//		Collection: "app.bsky.graph.list",
+//		Repo:       client.Auth.Did,
+//		Record: &lexutil.LexiconTypeDecoder{
+//			Val: &block,
+//		},
+//	})
+//
+//	if err != nil {
+//		log.Error(err, "Failed to create list record")
+//		return nil, err
+//	}
+//
+//	log.Info("List record created", "record", resp)
+//
+//	return resp, nil
+//}
+
+func AddAllToList(client *xrpc.Client, listURI string, source FollowList) error {
+	log := zapr.NewLogger(zap.L())
+	for _, h := range source.Accounts {
+		profile, err := bsky.ActorGetProfile(context.TODO(), client, h.Handle)
+		if err != nil {
+			var xErr *xrpc.Error
+			if errors.As(err, &xErr) {
+				if 400 == xErr.StatusCode {
+					log.Error(err, "Profile not found for handle", "handle", h)
+					continue
+				}
+			}
+			return fmt.Errorf("cannot get profile: %w", err)
+		}
+		AddToList(client, listURI, profile.Did)
 	}
 
-	//block := bsky.GraphBlock{
-	//	LexiconTypeID: "app.bsky.graph.block",
-	//	CreatedAt:     time.Now().Local().Format(time.RFC3339),
-	//	Subject:       profile.Did,
-	//}
-
-	itemResp, err := comatproto.RepoCreateRecord(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
-		Collection: "app.bsky.graph.listitem",
-		Repo:       client.Auth.Did,
-		Record: &lexutil.LexiconTypeDecoder{
-			Val: &item,
-		},
-	})
-
-	if err != nil {
-		return err
-	}
-	fmt.Printf("List item record created:\n%v", itemResp)
 	return nil
+
 }
 
 // AddToList adds a subjectDid to the list
@@ -149,3 +190,34 @@ func AddToList(client *xrpc.Client, listURI string, subjectDid string) error {
 //		},
 //	})
 //}
+
+// MergeFollowLists computes the union of two lists
+func MergeFollowLists(dest *FollowList, src FollowList) {
+	// Use a map to store unique strings from both lists
+	uniqueStrings := make(map[string]bool)
+
+	// Add elements from the first list to the map
+	for _, item := range dest.Accounts {
+		uniqueStrings[item.Handle] = true
+	}
+
+	// Add elements from the second list to the map
+	for _, item := range src.Accounts {
+		uniqueStrings[item.Handle] = true
+	}
+
+	// Convert map keys to a slice
+	result := make([]string, 0, len(uniqueStrings))
+	for item := range uniqueStrings {
+		result = append(result, item)
+	}
+
+	// Sort the result slice
+	sort.Strings(result)
+
+	dest.Accounts = make([]Account, 0, len(result))
+	for _, item := range result {
+		dest.Accounts = append(dest.Accounts, Account{Handle: item})
+	}
+
+}

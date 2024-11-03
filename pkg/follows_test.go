@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,6 +47,13 @@ func testSetup() (*TestStuff, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to make XRPC client")
 	}
+
+	l, err := zap.NewDevelopmentConfig().Build()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to create logger")
+	}
+
+	zap.ReplaceGlobals(l)
 
 	return &TestStuff{
 		Manager: m,
