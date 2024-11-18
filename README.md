@@ -87,11 +87,6 @@ PowerShell:
 /path/to/autocomplete.ps1
 ```
 
-
-## Development
-
-```
-
 ## License
 
 MIT
