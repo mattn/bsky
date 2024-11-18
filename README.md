@@ -65,6 +65,33 @@ Or install with go install command.
 go install github.com/mattn/bsky@latest
 ```
 
+### To enable Autocomplete
+
+Download the correct file from `/scripts` directory and add the following line to your shell configuration file.
+
+ZSH:
+```sh
+# Add the following line to your .zshrc
+source /path/to/autocomplete.zsh
+```
+
+Bash:
+```bash
+# Add the following line to your .bashrc
+source /path/to/autocomplete.sh
+```
+
+PowerShell:
+```powershell
+# Add the following line to your $PROFILE
+/path/to/autocomplete.ps1
+```
+
+
+## Development
+
+```
+
 ## License
 
 MIT

@@ -29,6 +29,7 @@ func main() {
 		Usage:       name,
 		Version:     version,
 		Description: "A cli application for bluesky",
+		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "a", Usage: "profile name"},
 			&cli.BoolFlag{Name: "V", Usage: "verbose"},
