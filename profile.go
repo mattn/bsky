@@ -241,7 +241,7 @@ func doUnfollow(cCtx *cli.Context) error {
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
 		fmt.Println(stringp(profile.Viewer.Following))
-		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+		_, err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
 			Rkey:       rkey,
@@ -407,7 +407,7 @@ func doUnblock(cCtx *cli.Context) error {
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
 		fmt.Println(stringp(profile.Viewer.Blocking))
-		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+		_, err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
 			Rkey:       rkey,
@@ -490,7 +490,7 @@ func doNotification(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, "")
+	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, false, "")
 	if err != nil {
 		return err
 	}

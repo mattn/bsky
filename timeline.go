@@ -99,7 +99,7 @@ func doTimeline(cCtx *cli.Context) error {
 			if handle == "self" {
 				handle = xrpcc.Auth.Did
 			}
-			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, "", n)
+			resp, err := bsky.FeedGetAuthorFeed(context.TODO(), xrpcc, handle, cursor, "", false, n)
 			if err != nil {
 				return fmt.Errorf("cannot get author feed: %w", err)
 			}
@@ -171,7 +171,7 @@ func doDelete(cCtx *cli.Context) error {
 		rkey := parts[len(parts)-1]
 		schema := parts[len(parts)-2]
 
-		err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
+		_, err = comatproto.RepoDeleteRecord(context.TODO(), xrpcc, &comatproto.RepoDeleteRecord_Input{
 			Repo:       xrpcc.Auth.Did,
 			Collection: schema,
 			Rkey:       rkey,
