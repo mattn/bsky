@@ -38,7 +38,7 @@ jobs:
 
   build_for_macos:
     name: Build for MacOS
-    runs-on: macos-latest
+    runs-on: macos-13 # Use macos-13 to build darwin/amd64. macos-latest is arm64.
     steps:
     - name: Install build dependencies
       run: brew install coreutils
