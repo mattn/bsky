@@ -434,6 +434,38 @@ func doPost(cCtx *cli.Context) error {
 		}
 	}
 
+	// embeded videos
+	videoFn := cCtx.String("video")
+	videoAltFn := cCtx.String("video-alt")
+	if videoFn != "" {
+		b, err := os.ReadFile(videoFn)
+		if err != nil {
+			return fmt.Errorf("cannot read video file: %w", err)
+		}
+		resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+		if err != nil {
+			return fmt.Errorf("cannot upload video file: %w", err)
+		}
+		var alt string
+		if videoAltFn != "" {
+			alt = videoAltFn
+		} else {
+			alt = filepath.Base(videoFn)
+		}
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
+		post.Embed.EmbedVideo = &bsky.EmbedVideo{
+			Alt:      &alt,
+			Captions: []*bsky.EmbedVideo_Caption{},
+			Video: &lexutil.LexBlob{
+				Ref:      resp.Blob.Ref,
+				MimeType: http.DetectContentType(b),
+				Size:     resp.Blob.Size,
+			},
+		}
+	}
+
 	resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
 		Collection: "app.bsky.feed.post",
 		Repo:       xrpcc.Auth.Did,

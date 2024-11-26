@@ -116,6 +116,8 @@ func main() {
 					&cli.BoolFlag{Name: "stdin"},
 					&cli.StringSliceFlag{Name: "image", Aliases: []string{"i"}},
 					&cli.StringSliceFlag{Name: "image-alt", Aliases: []string{"ia"}},
+					&cli.StringFlag{Name: "video", Aliases: []string{"v"}},
+					&cli.StringFlag{Name: "video-alt", Aliases: []string{"va"}},
 				},
 				HelpName:  "post",
 				ArgsUsage: "[text]",
