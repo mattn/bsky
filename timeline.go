@@ -412,10 +412,10 @@ func doPost(cCtx *cli.Context) error {
 				return fmt.Errorf("cannot upload image file: %w", err)
 			}
 			var alt string
-			if len(imageAltFn) < i {
-				alt = filepath.Base(fn)
-			} else {
+			if i < len(imageAltFn) {
 				alt = imageAltFn[i]
+			} else {
+				alt = filepath.Base(fn)
 			}
 			images = append(images, &bsky.EmbedImages_Image{
 				Alt: alt,
