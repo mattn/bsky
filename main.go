@@ -9,7 +9,7 @@ import (
 
 const name = "bsky"
 
-const version = "0.0.66"
+const version = "0.0.67"
 
 var revision = "HEAD"
 
@@ -25,10 +25,10 @@ type config struct {
 
 func main() {
 	app := &cli.App{
-		Name:        name,
-		Usage:       name,
-		Version:     version,
-		Description: "A cli application for bluesky",
+		Name:                 name,
+		Usage:                name,
+		Version:              version,
+		Description:          "A cli application for bluesky",
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "a", Usage: "profile name"},
