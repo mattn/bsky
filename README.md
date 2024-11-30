@@ -9,31 +9,42 @@ NAME:
    bsky - bsky
 
 USAGE:
-   bsky [global options] command [command options] [arguments...]
+   bsky [global options] command [command options]
 
 VERSION:
-   0.0.6
+   0.0.67
 
 DESCRIPTION:
    A cli application for bluesky
 
 COMMANDS:
-   show-profile    show profile
-   update-profile  update profile
-   timeline, tl    show timeline
-   search          search posts
-   thread          show thread
-   post            post new text
-   vote            vote the post
-   votes           show votes of the post
-   repost          repost the post
-   reposts         show reposts of the post
-   follow          follow the handle
-   follows         show follows
-   followers       show followers
-   delete          delete the note
-   login           login the social
-   help, h         Shows a list of commands or help for one command
+   show-profile         Show profile
+   update-profile       Update profile
+   show-session         Show session
+   timeline, tl         Show timeline
+   stream               Show timeline as stream
+   thread               Show thread
+   post                 Post new text
+   vote                 Vote the post
+   votes                Show votes of the post
+   repost               Repost the post
+   reposts              Show reposts of the post
+   follow               Follow the handle
+   unfollow             Unfollow the handle
+   follows              Show follows
+   followers            Show followers
+   block                Block the handle
+   unblock              Unblock the handle
+   blocks               Show blocks
+   delete               Delete the note
+   search               Search Bluesky
+   login                Login the social
+   notification, notif  Show notifications
+   invite-codes         Show invite codes
+   list-app-passwords   Show App-passwords
+   add-app-password     Add App-password
+   revoke-app-password  Revoke App-password
+   help, h              Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    -a value       profile name
@@ -55,6 +66,14 @@ $ bsky post -image ~/pizza.jpg 'I love 🍕'
 $ bsky vote at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
 $ bsky repost at://did:plc:xxxxxxxxxxxxxxxxxxxxxxxx/app.bsky.feed.post/yyyyyyyyyyyyy
 ```
+
+### Extended Usage Information
+
+Individual commands have their own help texts. Call via `-h` / `--help` and the name of the command.
+
+### JSON Output
+
+The output for most commands can be formatted as JSON via `--json`. See Extended Usage Information for the individual commands that support JSON output.
 
 ## Installation
 
