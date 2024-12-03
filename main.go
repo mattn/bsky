@@ -274,6 +274,7 @@ func main() {
 				Aliases:     []string{"notif"},
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "a", Usage: "show all"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
 				},
 				HelpName: "notification",
 				Action:   doNotification,
