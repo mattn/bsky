@@ -210,7 +210,7 @@ func main() {
 				Name:        "block",
 				Description: "Block the handle",
 				Usage:       "Block the handle",
-				UsageText:   "bsky block [handle]",
+				UsageText:   "bsky block [handle/did]",
 				HelpName:    "block",
 				Action:      doBlock,
 			},
@@ -235,6 +235,37 @@ func main() {
 				Action:   doBlocks,
 			},
 			{
+				Name:        "mute",
+				Description: "Mute the handle",
+				Usage:       "Mute the handle",
+				UsageText:   "bsky mute [handle/did]",
+				HelpName:    "mute",
+				Action:      doMute,
+			},
+			{
+				Name:        "report",
+				Description: "Report the handle",
+				Usage:       "Report the handle",
+				UsageText:   "bsky report [handle/did]",
+				HelpName:    "report",
+				Action:      doReport,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "comment", Usage: "report comment"},
+				},
+			},
+			{
+				Name:        "moderation-list",
+				Description: "Add the handle to a new moderation list",
+				Usage:       "Add the handle to a new moderation list",
+				UsageText:   "bsky moderation-list [handle/did]",
+				HelpName:    "moderation-list",
+				Action:      doModList,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "name", Value: "NewList", Usage: "list name"},
+					&cli.StringFlag{Name: "description", Aliases: []string{"desc"}, Value: "", Usage: "description"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Delete the note",
 				Usage:       "Delete the note",
@@ -252,6 +283,17 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.IntFlag{Name: "n", Value: 100, Usage: "number of items"},
 					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+			},
+			{
+				Name:        "search-actors",
+				Description: "Search Actors",
+				Usage:       "Search Actors",
+				UsageText:   "bsky search-actors [terms]",
+				HelpName:    "search-actors",
+				Action:      doSearchActors,
+				Flags: []cli.Flag{
+					&cli.IntFlag{Name: "n", Value: 100, Usage: "number of items"},
 				},
 			},
 			{
