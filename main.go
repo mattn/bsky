@@ -11,6 +11,7 @@ const name = "bsky"
 
 const version = "0.0.69"
 
+//nolint:unused
 var revision = "HEAD"
 
 type config struct {

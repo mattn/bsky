@@ -47,7 +47,7 @@ func loadConfig(profile string) (*config, string, error) {
 	} else {
 		fp = filepath.Join(dir, "config-"+profile+".json")
 	}
-	os.MkdirAll(filepath.Dir(fp), 0700)
+	checkError(os.MkdirAll(filepath.Dir(fp), 0700), "Could not make directory '%s'", fp)
 
 	b, err := os.ReadFile(fp)
 	if err != nil {
