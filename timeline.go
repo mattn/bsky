@@ -60,9 +60,11 @@ func doThread(cCtx *cli.Context) error {
 
 	replies := resp.Thread.FeedDefs_ThreadViewPost.Replies
 	if cCtx.Bool("json") {
-		json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedDefs_ThreadViewPost)
+		checkError(
+			json.NewEncoder(os.Stdout).Encode(resp.Thread.FeedDefs_ThreadViewPost),
+			"Could not encode post replies properly")
 		for _, p := range replies {
-			json.NewEncoder(os.Stdout).Encode(p)
+			checkError(json.NewEncoder(os.Stdout).Encode(p), "Could not encode post reply properly")
 		}
 		return nil
 	}
@@ -136,7 +138,7 @@ func doTimeline(cCtx *cli.Context) error {
 	}
 	if cCtx.Bool("json") {
 		for _, p := range feed {
-			json.NewEncoder(os.Stdout).Encode(p)
+			checkError(json.NewEncoder(os.Stdout).Encode(p), "Could not encode post properly")
 		}
 	} else {
 		for _, p := range feed {
@@ -562,7 +564,7 @@ func doVotes(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, v := range votes.Likes {
-			json.NewEncoder(os.Stdout).Encode(v)
+			checkError(json.NewEncoder(os.Stdout).Encode(v), "Could not encode vote properly")
 		}
 		return nil
 	}
@@ -663,7 +665,7 @@ func doReposts(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, r := range reposts.RepostedBy {
-			json.NewEncoder(os.Stdout).Encode(r)
+			checkError(json.NewEncoder(os.Stdout).Encode(r), "Could not encode repost properly")
 		}
 		return nil
 	}
@@ -753,14 +755,16 @@ func doStream(cCtx *cli.Context) error {
 			}
 		}
 		if cCtx.Bool("json") {
-			enc.Encode(Rec{
-				Op:   op,
-				Seq:  seq,
-				Path: path,
-				Did:  did,
-				Rcid: rcid,
-				Rec:  rec,
-			})
+			checkError(
+				enc.Encode(Rec{
+					Op:   op,
+					Seq:  seq,
+					Path: path,
+					Did:  did,
+					Rcid: rcid,
+					Rec:  rec,
+				}),
+				"Encountered error encoding record")
 		} else if isPost {
 			xrpcc, err := makeXRPCC(cCtx)
 			if err != nil {
