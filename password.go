@@ -33,7 +33,7 @@ func doListAppPasswords(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, password := range passwords.Passwords {
-			json.NewEncoder(os.Stdout).Encode(password)
+			checkError(json.NewEncoder(os.Stdout).Encode(password), "Could not encode password properly")
 		}
 		return nil
 	}
@@ -64,7 +64,7 @@ func doAddAppPassword(cCtx *cli.Context) error {
 		}
 
 		if cCtx.Bool("json") {
-			json.NewEncoder(os.Stdout).Encode(password)
+			checkError(json.NewEncoder(os.Stdout).Encode(password), "Could not encode password properly")
 		} else {
 			fmt.Printf("%s: %s\n", password.Name, password.Password)
 		}
