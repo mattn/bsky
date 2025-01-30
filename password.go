@@ -21,11 +21,6 @@ func doListAppPasswords(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	arg := cCtx.String("handle")
-	if arg == "" {
-		arg = xrpcc.Auth.Handle
-	}
-
 	passwords, err := comatproto.ServerListAppPasswords(context.TODO(), xrpcc)
 	if err != nil {
 		return fmt.Errorf("cannot get profile: %w", err)
