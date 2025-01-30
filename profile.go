@@ -40,7 +40,7 @@ func doShowProfile(cCtx *cli.Context) error {
 	}
 
 	if cCtx.Bool("json") {
-		json.NewEncoder(os.Stdout).Encode(profile)
+		checkError(json.NewEncoder(os.Stdout).Encode(profile), "Could not encode profile properly")
 		return nil
 	}
 
@@ -278,7 +278,7 @@ func doFollows(cCtx *cli.Context) error {
 
 		if cCtx.Bool("json") {
 			for _, f := range follows.Follows {
-				json.NewEncoder(os.Stdout).Encode(f)
+				checkError(json.NewEncoder(os.Stdout).Encode(f), "Could not encode record properly")
 			}
 		} else {
 			for _, f := range follows.Follows {
@@ -323,7 +323,7 @@ func doFollowers(cCtx *cli.Context) error {
 
 		if cCtx.Bool("json") {
 			for _, f := range followers.Followers {
-				json.NewEncoder(os.Stdout).Encode(f)
+				checkError(json.NewEncoder(os.Stdout).Encode(f), "Could not encode record properly")
 			}
 		} else {
 			for _, f := range followers.Followers {
@@ -479,8 +479,7 @@ func doReport(cCtx *cli.Context) error {
 		}
 
 		comment := cCtx.String("comment")
-		var reasonType string
-		reasonType = "com.atproto.moderation.defs#reasonSpam"
+		var reasonType = "com.atproto.moderation.defs#reasonSpam"
 		input := map[string]interface{}{
 			"reasonType": reasonType,
 			"subject": map[string]string{
@@ -515,8 +514,7 @@ func doModList(cCtx *cli.Context) error {
 	name := cCtx.String("name")
 	description := cCtx.String("description")
 
-	var purpose string
-	purpose = "app.bsky.graph.defs#modlist"
+	var purpose = "app.bsky.graph.defs#modlist"
 	modList := bsky.GraphList{
 		Name:        name,
 		Purpose:     &purpose,
@@ -670,7 +668,7 @@ func doBlocks(cCtx *cli.Context) error {
 
 		if cCtx.Bool("json") {
 			for _, f := range blocks.Blocks {
-				json.NewEncoder(os.Stdout).Encode(f)
+				checkError(json.NewEncoder(os.Stdout).Encode(f), "Could not encode record properly")
 			}
 		} else {
 			for _, f := range blocks.Blocks {
@@ -729,7 +727,7 @@ func doNotification(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, n := range notifs.Notifications {
-			json.NewEncoder(os.Stdout).Encode(n)
+			checkError(json.NewEncoder(os.Stdout).Encode(n), "Could not encode notification properly")
 		}
 		return nil
 	}
@@ -757,9 +755,11 @@ func doNotification(cCtx *cli.Context) error {
 			fmt.Println(" followed you")
 		}
 
-		bsky.NotificationUpdateSeen(context.TODO(), xrpcc, &bsky.NotificationUpdateSeen_Input{
-			SeenAt: time.Now().Local().Format(time.RFC3339),
-		})
+		checkError(
+			bsky.NotificationUpdateSeen(context.TODO(), xrpcc, &bsky.NotificationUpdateSeen_Input{
+				SeenAt: time.Now().Local().Format(time.RFC3339),
+			}),
+			"Encountered error when checking if notification update was seen.")
 	}
 
 	return nil
@@ -777,7 +777,7 @@ func doShowSession(cCtx *cli.Context) error {
 	}
 
 	if cCtx.Bool("json") {
-		json.NewEncoder(os.Stdout).Encode(session)
+		checkError(json.NewEncoder(os.Stdout).Encode(session), "Could not encode session properly")
 		return nil
 	}
 
@@ -802,7 +802,7 @@ func doInviteCodes(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, c := range codes.Codes {
-			json.NewEncoder(os.Stdout).Encode(c)
+			checkError(json.NewEncoder(os.Stdout).Encode(c), "Could not encode invite codes properly")
 		}
 		return nil
 	}
