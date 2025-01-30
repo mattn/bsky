@@ -870,5 +870,5 @@ func doStream(cCtx *cli.Context) error {
 		},
 	}
 
-	return events.HandleRepoStream(ctx, con, sequential.NewScheduler("stream", rsc.EventHandler))
+	return events.HandleRepoStream(ctx, con, sequential.NewScheduler("stream", rsc.EventHandler), sLog)
 }
