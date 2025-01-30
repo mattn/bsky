@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -202,4 +203,12 @@ func ParseCid(cidUrl *string) (cidDecode.Cid, string, error) {
 	}
 
 	return decodedCid, "image/" + imageType, nil
+}
+
+var sLog = slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+func checkError(err error, msg string, args ...interface{}) {
+	if err != nil {
+		sLog.Error(msg, args...)
+	}
 }
