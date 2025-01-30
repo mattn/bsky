@@ -699,7 +699,9 @@ func doStream(cCtx *cli.Context) error {
 		u.Path = "/xrpc/com.atproto.sync.subscribeRepos"
 		cur := cCtx.String("cursor")
 		if cur != "" {
-			u.Query().Add("cursor", cur)
+			q := u.Query()
+			q.Add("cursor", cur)
+			u.RawQuery = q.Encode()
 		}
 		host = u.String()
 	}
