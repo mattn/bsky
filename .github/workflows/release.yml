@@ -57,7 +57,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-darwin
         path: bsky-darwin-*.zip
@@ -84,7 +84,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-windows
         path: bsky-windows-*.zip
