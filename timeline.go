@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -184,73 +185,80 @@ func doDelete(cCtx *cli.Context) error {
 }
 
 func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
-	res, _ := http.Get(link)
-	if res != nil {
-		defer res.Body.Close()
+	if post.Embed != nil && post.Embed.EmbedExternal != nil {
+		return
+	}
+	res, err := http.Get(link)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
 
-		br := bufio.NewReader(res.Body)
-		var reader io.Reader = br
+	br := bufio.NewReader(res.Body)
+	var reader io.Reader = br
 
-		data, err2 := br.Peek(1024)
-		if err2 == nil {
-			enc, name, _ := charset.DetermineEncoding(data, res.Header.Get("content-type"))
+	data, err2 := br.Peek(1024)
+	if err2 == nil {
+		enc, name, _ := charset.DetermineEncoding(data, res.Header.Get("content-type"))
+		if enc != nil {
+			reader = enc.NewDecoder().Reader(br)
+		} else if len(name) > 0 {
+			enc := encoding.GetEncoding(name)
 			if enc != nil {
 				reader = enc.NewDecoder().Reader(br)
-			} else if len(name) > 0 {
-				enc := encoding.GetEncoding(name)
-				if enc != nil {
-					reader = enc.NewDecoder().Reader(br)
-				}
 			}
 		}
+	}
 
-		var title string
-		var description string
-		var imgURL string
-		doc, err := goquery.NewDocumentFromReader(reader)
-		if err == nil {
-			title = doc.Find(`title`).Text()
-			description, _ = doc.Find(`meta[property="description"]`).Attr("content")
-			imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
+	var title string
+	var description string
+	var imgURL string
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err == nil {
+		title = doc.Find(`title`).Text()
+		description, _ = doc.Find(`meta[property="description"]`).Attr("content")
+		imgURL, _ = doc.Find(`meta[property="og:image"]`).Attr("content")
+		if title == "" {
+			title, _ = doc.Find(`meta[property="og:title"]`).Attr("content")
 			if title == "" {
-				title, _ = doc.Find(`meta[property="og:title"]`).Attr("content")
-				if title == "" {
-					title = link
-				}
-			}
-			if description == "" {
-				description, _ = doc.Find(`meta[property="og:description"]`).Attr("content")
-				if description == "" {
-					description = link
-				}
-			}
-			post.Embed.EmbedExternal = &bsky.EmbedExternal{
-				External: &bsky.EmbedExternal_External{
-					Description: description,
-					Title:       title,
-					Uri:         link,
-				},
-			}
-		} else {
-			post.Embed.EmbedExternal = &bsky.EmbedExternal{
-				External: &bsky.EmbedExternal_External{
-					Uri: link,
-				},
+				title = link
 			}
 		}
-		if imgURL != "" && post.Embed.EmbedExternal != nil {
-			resp, err := http.Get(imgURL)
-			if err == nil && resp.StatusCode == http.StatusOK {
-				defer resp.Body.Close()
-				b, err := io.ReadAll(resp.Body)
+		if description == "" {
+			description, _ = doc.Find(`meta[property="og:description"]`).Attr("content")
+			if description == "" {
+				description = link
+			}
+		}
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
+		post.Embed.EmbedExternal = &bsky.EmbedExternal{
+			External: &bsky.EmbedExternal_External{
+				Description: description,
+				Title:       title,
+				Uri:         link,
+			},
+		}
+	} else {
+		post.Embed.EmbedExternal = &bsky.EmbedExternal{
+			External: &bsky.EmbedExternal_External{
+				Uri: link,
+			},
+		}
+	}
+	if imgURL != "" && post.Embed.EmbedExternal != nil {
+		resp, err := http.Get(imgURL)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+			b, err := io.ReadAll(resp.Body)
+			if err == nil {
+				resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
 				if err == nil {
-					resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
-					if err == nil {
-						post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
-							Ref:      resp.Blob.Ref,
-							MimeType: http.DetectContentType(b),
-							Size:     resp.Blob.Size,
-						}
+					post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
+						Ref:      resp.Blob.Ref,
+						MimeType: http.DetectContentType(b),
+						Size:     resp.Blob.Size,
 					}
 				}
 			}
@@ -353,12 +361,8 @@ func doPost(cCtx *cli.Context) error {
 				ByteEnd:   entry.end,
 			},
 		})
-		if post.Embed == nil {
-			post.Embed = &bsky.FeedPost_Embed{}
-		}
-		if post.Embed.EmbedExternal == nil {
-			addLink(xrpcc, post, entry.text)
-		}
+
+		addLink(xrpcc, post, entry.text)
 	}
 
 	for _, entry := range extractMentionsBytes(text) {
@@ -866,5 +870,5 @@ func doStream(cCtx *cli.Context) error {
 		},
 	}
 
-	return events.HandleRepoStream(ctx, con, sequential.NewScheduler("stream", rsc.EventHandler))
+	return events.HandleRepoStream(ctx, con, sequential.NewScheduler("stream", rsc.EventHandler), slog.Default())
 }
