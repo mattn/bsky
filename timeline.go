@@ -368,7 +368,7 @@ func doPost(cCtx *cli.Context) error {
 	for _, entry := range extractMentionsBytes(text) {
 		profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, entry.text)
 		if err != nil {
-			return err
+			continue
 		}
 		post.Facets = append(post.Facets, &bsky.RichtextFacet{
 			Features: []*bsky.RichtextFacet_Features_Elem{
