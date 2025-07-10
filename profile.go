@@ -11,9 +11,9 @@ import (
 	"time"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
-	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/bluesky-social/indigo/api/bsky"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/fatih/color"
 
 	"github.com/urfave/cli/v2"
@@ -355,29 +355,29 @@ func doBlock(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
-	  var did *string
-    if strings.HasPrefix(arg, "did:") {
-      did = &arg
-    } else {
-      profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-      if err != nil {
-        profileErr := err
-        result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
-        if err != nil {
-          panic("Failed to search: " + err.Error())
-        }
-        for _, actor := range result.Actors {
-          if err == nil && arg == actor.Handle {
-            did = &actor.Did
-          }
-        }
-        if did == nil {
-          panic("Failed to get profile: " + profileErr.Error())
-        }
-      } else {
-        did = &profile.Did
-      }
-    }
+		var did *string
+		if strings.HasPrefix(arg, "did:") {
+			did = &arg
+		} else {
+			profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+			if err != nil {
+				profileErr := err
+				result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
+				if err != nil {
+					panic("Failed to search: " + err.Error())
+				}
+				for _, actor := range result.Actors {
+					if err == nil && arg == actor.Handle {
+						did = &actor.Did
+					}
+				}
+				if did == nil {
+					panic("Failed to get profile: " + profileErr.Error())
+				}
+			} else {
+				did = &profile.Did
+			}
+		}
 
 		block := bsky.GraphBlock{
 			LexiconTypeID: "app.bsky.graph.block",
@@ -411,29 +411,29 @@ func doMute(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
-	  var did *string
-    if strings.HasPrefix(arg, "did:") {
-      did = &arg
-    } else {
-      profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-      if err != nil {
-        profileErr := err
-        result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
-        if err != nil {
-          panic("Failed to search: " + err.Error())
-        }
-        for _, actor := range result.Actors {
-          if err == nil && arg == actor.Handle {
-            did = &actor.Did
-          }
-        }
-        if did == nil {
-          panic("Failed to get profile: " + profileErr.Error())
-        }
-      } else {
-        did = &profile.Did
-      }
-    }
+		var did *string
+		if strings.HasPrefix(arg, "did:") {
+			did = &arg
+		} else {
+			profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+			if err != nil {
+				profileErr := err
+				result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
+				if err != nil {
+					panic("Failed to search: " + err.Error())
+				}
+				for _, actor := range result.Actors {
+					if err == nil && arg == actor.Handle {
+						did = &actor.Did
+					}
+				}
+				if did == nil {
+					panic("Failed to get profile: " + profileErr.Error())
+				}
+			} else {
+				did = &profile.Did
+			}
+		}
 
 		err = bsky.GraphMuteActor(context.TODO(), xrpcc, &bsky.GraphMuteActor_Input{Actor: *did})
 		if err != nil {
@@ -454,38 +454,38 @@ func doReport(cCtx *cli.Context) error {
 	}
 
 	for _, arg := range cCtx.Args().Slice() {
-	  var did *string
-    if strings.HasPrefix(arg, "did:") {
-      did = &arg
-    } else {
-      profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-      if err != nil {
-        profileErr := err
-        result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
-        if err != nil {
-          panic("Failed to search: " + err.Error())
-        }
-        for _, actor := range result.Actors {
-          if err == nil && arg == actor.Handle {
-            did = &actor.Did
-          }
-        }
-        if did == nil {
-          panic("Failed to get profile: " + profileErr.Error())
-        }
-      } else {
-        did = &profile.Did
-      }
-    }
+		var did *string
+		if strings.HasPrefix(arg, "did:") {
+			did = &arg
+		} else {
+			profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+			if err != nil {
+				profileErr := err
+				result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
+				if err != nil {
+					panic("Failed to search: " + err.Error())
+				}
+				for _, actor := range result.Actors {
+					if err == nil && arg == actor.Handle {
+						did = &actor.Did
+					}
+				}
+				if did == nil {
+					panic("Failed to get profile: " + profileErr.Error())
+				}
+			} else {
+				did = &profile.Did
+			}
+		}
 
-    comment := cCtx.String("comment")
+		comment := cCtx.String("comment")
 		var reasonType string
 		reasonType = "com.atproto.moderation.defs#reasonSpam"
 		input := map[string]interface{}{
 			"reasonType": reasonType,
 			"subject": map[string]string{
 				"$type": "com.atproto.admin.defs#repoRef",
-				"did": *did,
+				"did":   *did,
 			},
 			"comment":   comment,
 			"createdAt": time.Now().Format(time.RFC3339),
@@ -515,69 +515,69 @@ func doModList(cCtx *cli.Context) error {
 	name := cCtx.String("name")
 	description := cCtx.String("description")
 
-  var purpose string
-  purpose =     "app.bsky.graph.defs#modlist"
-  modList := bsky.GraphList{
-      Name:        name,
-      Purpose:     &purpose,
-      Description: &description,
-      CreatedAt:   time.Now().Format(time.RFC3339),
-  }
+	var purpose string
+	purpose = "app.bsky.graph.defs#modlist"
+	modList := bsky.GraphList{
+		Name:        name,
+		Purpose:     &purpose,
+		Description: &description,
+		CreatedAt:   time.Now().Format(time.RFC3339),
+	}
 
-  listResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-      Repo:       xrpcc.Auth.Did,
-      Collection: "app.bsky.graph.list",
-      Record:     &lexutil.LexiconTypeDecoder{
-        Val: &modList,
-      },
-  })
-  if err != nil {
-      panic(err)
-  }
+	listResp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
+		Repo:       xrpcc.Auth.Did,
+		Collection: "app.bsky.graph.list",
+		Record: &lexutil.LexiconTypeDecoder{
+			Val: &modList,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 
-  listURI := listResp.Uri
-  fmt.Println("List created successfully. URI:", listURI)
+	listURI := listResp.Uri
+	fmt.Println("List created successfully. URI:", listURI)
 
 	for _, arg := range cCtx.Args().Slice() {
-	  var did *string
-    if strings.HasPrefix(arg, "did:") {
-      did = &arg
-    } else {
-      profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
-      if err != nil {
-        profileErr := err
-        result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
-        if err != nil {
-          panic("Failed to search: " + err.Error())
-        }
-        for _, actor := range result.Actors {
-          if err == nil && arg == actor.Handle {
-            did = &actor.Did
-          }
-        }
-        if did == nil {
-          panic("Failed to get profile: " + profileErr.Error())
-        }
-      } else {
-        did = &profile.Did
-      }
-    }
+		var did *string
+		if strings.HasPrefix(arg, "did:") {
+			did = &arg
+		} else {
+			profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+			if err != nil {
+				profileErr := err
+				result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", 50, arg, "")
+				if err != nil {
+					panic("Failed to search: " + err.Error())
+				}
+				for _, actor := range result.Actors {
+					if err == nil && arg == actor.Handle {
+						did = &actor.Did
+					}
+				}
+				if did == nil {
+					panic("Failed to get profile: " + profileErr.Error())
+				}
+			} else {
+				did = &profile.Did
+			}
+		}
 
 		listItem := bsky.GraphListitem{
-				Subject: *did,
-				List:    listURI,
-				CreatedAt: time.Now().Format(time.RFC3339),
+			Subject:   *did,
+			List:      listURI,
+			CreatedAt: time.Now().Format(time.RFC3339),
 		}
 
 		_, err = comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
-				Repo:       xrpcc.Auth.Did,
-				Collection: "app.bsky.graph.listitem",
-				Record:     &lexutil.LexiconTypeDecoder{
-				  Val: &listItem,
-				},
+			Repo:       xrpcc.Auth.Did,
+			Collection: "app.bsky.graph.listitem",
+			Record: &lexutil.LexiconTypeDecoder{
+				Val: &listItem,
+			},
 		})
 		if err != nil {
-				panic(err)
+			panic(err)
 		}
 
 		fmt.Println("User added to moderation list successfully.")
@@ -598,16 +598,16 @@ func doSearchActors(cCtx *cli.Context) error {
 	n := cCtx.Int64("n")
 
 	for _, arg := range cCtx.Args().Slice() {
-    result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", n, arg, "")
-    if err != nil {
-      panic("Failed to search: " + err.Error())
-    }
-    for _, actor := range result.Actors {
-      jsn, err := json.MarshalIndent(&actor, "", "  ")
-      if err == nil {
-        fmt.Println("Actor: ", string(jsn))
-      }
-    }
+		result, err := bsky.ActorSearchActors(context.TODO(), xrpcc, "", n, arg, "")
+		if err != nil {
+			panic("Failed to search: " + err.Error())
+		}
+		for _, actor := range result.Actors {
+			jsn, err := json.MarshalIndent(&actor, "", "  ")
+			if err == nil {
+				fmt.Println("Actor: ", string(jsn))
+			}
+		}
 	}
 	return nil
 }
@@ -722,7 +722,7 @@ func doNotification(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, false, "")
+	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, false, nil, "")
 	if err != nil {
 		return err
 	}
