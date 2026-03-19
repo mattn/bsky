@@ -243,6 +243,25 @@ func main() {
 				Action:      doMute,
 			},
 			{
+				Name:        "unmute",
+				Description: "Unmute the handle",
+				Usage:       "Unmute the handle",
+				UsageText:   "bsky unmute [handle/did]",
+				HelpName:    "unmute",
+				Action:      doUnmute,
+			},
+			{
+				Name:        "mutes",
+				Description: "Show muted users",
+				Usage:       "Show muted users",
+				UsageText:   "bsky mutes",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "mutes",
+				Action:   doMutes,
+			},
+			{
 				Name:        "report",
 				Description: "Report the handle",
 				Usage:       "Report the handle",
@@ -263,6 +282,66 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Value: "NewList", Usage: "list name"},
 					&cli.StringFlag{Name: "description", Aliases: []string{"desc"}, Value: "", Usage: "description"},
+				},
+			},
+			{
+				Name:        "lists",
+				Description: "Show lists",
+				Usage:       "Show lists",
+				UsageText:   "bsky lists",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "handle", Aliases: []string{"H"}, Value: "", Usage: "user handle"},
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "lists",
+				Action:   doLists,
+			},
+			{
+				Name:        "list",
+				Description: "Show list items",
+				Usage:       "Show list items",
+				UsageText:   "bsky list [uri]",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+				},
+				HelpName: "list",
+				Action:   doList,
+			},
+			{
+				Name:        "chat",
+				Description: "Direct messages",
+				Usage:       "Direct messages",
+				UsageText:   "bsky chat <command>",
+				HelpName:    "chat",
+				Subcommands: []*cli.Command{
+					{
+						Name:        "list",
+						Description: "Show conversations",
+						Usage:       "Show conversations",
+						UsageText:   "bsky chat list",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+						},
+						Action: doConvos,
+					},
+					{
+						Name:        "read",
+						Description: "Show messages in a conversation",
+						Usage:       "Show messages in a conversation",
+						UsageText:   "bsky chat read [conversation-id]",
+						Flags: []cli.Flag{
+							&cli.Int64Flag{Name: "n", Value: 50, Usage: "number of messages"},
+							&cli.BoolFlag{Name: "json", Usage: "output JSON"},
+						},
+						Action: doConvo,
+					},
+					{
+						Name:        "send",
+						Description: "Send a direct message",
+						Usage:       "Send a direct message",
+						UsageText:   "bsky chat send [handle] [message]",
+						Action:      doChat,
+					},
 				},
 			},
 			{
