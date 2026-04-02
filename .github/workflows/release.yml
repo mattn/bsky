@@ -105,6 +105,6 @@ jobs:
         with:
           name: bsky ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
+          draft: false
           generate_release_notes: true
           files: dist-*/bsky*.*
