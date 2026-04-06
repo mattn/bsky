@@ -27,10 +27,10 @@ install:
 
 .PHONY: show-version
 show-version: $(GOBIN)/gobump
-	gobump show -r .
+	GOARCH= GOOS= gobump show -r .
 
 $(GOBIN)/gobump:
-	go install github.com/x-motemen/gobump/cmd/gobump@latest
+	GOARCH= GOOS= go install github.com/x-motemen/gobump/cmd/gobump@latest
 
 .PHONY: test
 test: build

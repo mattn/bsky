@@ -479,7 +479,8 @@ func doReport(cCtx *cli.Context) error {
 		}
 
 		comment := cCtx.String("comment")
-		var reasonType = "com.atproto.moderation.defs#reasonSpam"
+		var reasonType string
+		reasonType = "com.atproto.moderation.defs#reasonSpam"
 		input := map[string]interface{}{
 			"reasonType": reasonType,
 			"subject": map[string]string{
@@ -514,7 +515,8 @@ func doModList(cCtx *cli.Context) error {
 	name := cCtx.String("name")
 	description := cCtx.String("description")
 
-	var purpose = "app.bsky.graph.defs#modlist"
+	var purpose string
+	purpose = "app.bsky.graph.defs#modlist"
 	modList := bsky.GraphList{
 		Name:        name,
 		Purpose:     &purpose,
@@ -579,6 +581,181 @@ func doModList(cCtx *cli.Context) error {
 		}
 
 		fmt.Println("User added to moderation list successfully.")
+	}
+	return nil
+}
+
+func doUnmute(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	for _, arg := range cCtx.Args().Slice() {
+		var did *string
+		if strings.HasPrefix(arg, "did:") {
+			did = &arg
+		} else {
+			profile, err := bsky.ActorGetProfile(context.TODO(), xrpcc, arg)
+			if err != nil {
+				return fmt.Errorf("cannot get profile: %w", err)
+			}
+			did = &profile.Did
+		}
+
+		err = bsky.GraphUnmuteActor(context.TODO(), xrpcc, &bsky.GraphUnmuteActor_Input{Actor: *did})
+		if err != nil {
+			return fmt.Errorf("cannot unmute user: %w", err)
+		}
+	}
+	return nil
+}
+
+func doMutes(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	var cursor string
+	for {
+		mutes, err := bsky.GraphGetMutes(context.TODO(), xrpcc, cursor, 100)
+		if err != nil {
+			return fmt.Errorf("getting mutes: %w", err)
+		}
+
+		if cCtx.Bool("json") {
+			for _, m := range mutes.Mutes {
+				json.NewEncoder(os.Stdout).Encode(m)
+			}
+		} else {
+			for _, m := range mutes.Mutes {
+				color.Set(color.FgHiRed)
+				fmt.Print(m.Handle)
+				color.Set(color.Reset)
+				fmt.Printf(" [%s] ", stringp(m.DisplayName))
+				color.Set(color.FgBlue)
+				fmt.Println(m.Did)
+				color.Set(color.Reset)
+			}
+		}
+		if mutes.Cursor == nil {
+			break
+		}
+		cursor = *mutes.Cursor
+	}
+	return nil
+}
+
+func doLists(cCtx *cli.Context) error {
+	if cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	actor := cCtx.String("handle")
+	if actor == "" {
+		actor = xrpcc.Auth.Did
+	}
+
+	var cursor string
+	for {
+		resp, err := bsky.GraphGetLists(context.TODO(), xrpcc, actor, cursor, 100, nil)
+		if err != nil {
+			return fmt.Errorf("cannot get lists: %w", err)
+		}
+
+		if cCtx.Bool("json") {
+			for _, l := range resp.Lists {
+				json.NewEncoder(os.Stdout).Encode(l)
+			}
+		} else {
+			for _, l := range resp.Lists {
+				color.Set(color.FgHiRed)
+				fmt.Print(l.Name)
+				color.Set(color.Reset)
+				fmt.Printf(" (%s)", stringp(l.Purpose))
+				if l.ListItemCount != nil {
+					fmt.Printf(" [%d items]", *l.ListItemCount)
+				}
+				fmt.Println()
+				if l.Description != nil {
+					fmt.Printf(" %s\n", *l.Description)
+				}
+				fmt.Print(" - ")
+				color.Set(color.FgBlue)
+				fmt.Println(l.Uri)
+				color.Set(color.Reset)
+			}
+		}
+		if resp.Cursor == nil {
+			break
+		}
+		cursor = *resp.Cursor
+	}
+	return nil
+}
+
+func doList(cCtx *cli.Context) error {
+	if !cCtx.Args().Present() {
+		return cli.ShowSubcommandHelp(cCtx)
+	}
+
+	xrpcc, err := makeXRPCC(cCtx)
+	if err != nil {
+		return fmt.Errorf("cannot create client: %w", err)
+	}
+
+	listUri := cCtx.Args().First()
+
+	var cursor string
+	for {
+		resp, err := bsky.GraphGetList(context.TODO(), xrpcc, cursor, 100, listUri)
+		if err != nil {
+			return fmt.Errorf("cannot get list: %w", err)
+		}
+
+		if cCtx.Bool("json") {
+			for _, item := range resp.Items {
+				json.NewEncoder(os.Stdout).Encode(item)
+			}
+		} else {
+			if cursor == "" {
+				color.Set(color.FgHiRed)
+				fmt.Print(resp.List.Name)
+				color.Set(color.Reset)
+				if resp.List.Description != nil {
+					fmt.Printf(" - %s", *resp.List.Description)
+				}
+				fmt.Println()
+				fmt.Println()
+			}
+			for _, item := range resp.Items {
+				color.Set(color.FgHiRed)
+				fmt.Print(item.Subject.Handle)
+				color.Set(color.Reset)
+				fmt.Printf(" [%s] ", stringp(item.Subject.DisplayName))
+				color.Set(color.FgBlue)
+				fmt.Println(item.Subject.Did)
+				color.Set(color.Reset)
+			}
+		}
+		if resp.Cursor == nil {
+			break
+		}
+		cursor = *resp.Cursor
 	}
 	return nil
 }
@@ -720,7 +897,7 @@ func doNotification(cCtx *cli.Context) error {
 		return fmt.Errorf("cannot create client: %w", err)
 	}
 
-	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, false, "")
+	notifs, err := bsky.NotificationListNotifications(context.TODO(), xrpcc, "", 50, false, nil, "")
 	if err != nil {
 		return err
 	}

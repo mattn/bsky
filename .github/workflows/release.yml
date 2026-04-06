@@ -31,14 +31,14 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-linux
         path: bsky-linux-*.zip
 
   build_for_macos:
     name: Build for MacOS
-    runs-on: macos-13 # Use macos-13 to build darwin/amd64. macos-latest is arm64.
+    runs-on: macos-latest
     steps:
     - name: Install build dependencies
       run: brew install coreutils
@@ -57,7 +57,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-darwin
         path: bsky-darwin-*.zip
@@ -84,7 +84,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-windows
         path: bsky-windows-*.zip
@@ -98,13 +98,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: bsky ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
+          draft: false
           generate_release_notes: true
           files: dist-*/bsky*.*

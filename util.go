@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -150,12 +152,28 @@ func makeXRPCC(cCtx *cli.Context) (*xrpc.Client, error) {
 		}
 	}
 	if err != nil {
-		auth, err := comatproto.ServerCreateSession(context.TODO(), xrpcc, &comatproto.ServerCreateSession_Input{
+		input := &comatproto.ServerCreateSession_Input{
 			Identifier: xrpcc.Auth.Handle,
 			Password:   cfg.Password,
-		})
+		}
+		auth, err := comatproto.ServerCreateSession(context.TODO(), xrpcc, input)
 		if err != nil {
-			return nil, fmt.Errorf("cannot create session: %w", err)
+			var xrpcErr *xrpc.Error
+			if errors.As(err, &xrpcErr) {
+				var xe *xrpc.XRPCError
+				if errors.As(xrpcErr.Wrapped, &xe) && xe.ErrStr == "AuthFactorTokenRequired" {
+					fmt.Fprintf(os.Stderr, "2FA is enabled. A sign-in code has been sent to your email.\nEnter the code: ")
+					scanner := bufio.NewScanner(os.Stdin)
+					if scanner.Scan() {
+						token := strings.TrimSpace(scanner.Text())
+						input.AuthFactorToken = &token
+						auth, err = comatproto.ServerCreateSession(context.TODO(), xrpcc, input)
+					}
+				}
+			}
+			if err != nil {
+				return nil, fmt.Errorf("cannot create session: %w", err)
+			}
 		}
 		xrpcc.Auth.Did = auth.Did
 		xrpcc.Auth.AccessJwt = auth.AccessJwt
