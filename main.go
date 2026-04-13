@@ -439,6 +439,14 @@ func main() {
 				HelpName:    "revoke-app-password",
 				Action:      doRevokeAppPassword,
 			},
+			{
+				Name:        "mcp",
+				Description: "Start MCP server",
+				Usage:       "Start MCP server",
+				UsageText:   "bsky mcp",
+				HelpName:    "mcp",
+				Action:      doMcp,
+			},
 		},
 		Metadata: map[string]any{},
 		Before: func(cCtx *cli.Context) error {

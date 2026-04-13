@@ -717,7 +717,7 @@ func doStream(cCtx *cli.Context) error {
 		}
 	}
 
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT)
 
 	con, _, err := websocket.DefaultDialer.Dial(host, http.Header{})
