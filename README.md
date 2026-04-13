@@ -44,6 +44,7 @@ COMMANDS:
    list-app-passwords   Show App-passwords
    add-app-password     Add App-password
    revoke-app-password  Revoke App-password
+   mcp                  Start MCP server
    help, h              Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -82,6 +83,38 @@ Download binary from Release page.
 Or install with go install command.
 ```
 go install github.com/mattn/bsky@latest
+```
+
+### MCP Server
+
+`bsky mcp` starts an MCP (Model Context Protocol) server over stdio. This allows AI assistants like Claude to interact with Bluesky directly.
+
+Available tools:
+
+| Tool | Description |
+|------|-------------|
+| `bluesky_timeline` | Show timeline posts |
+| `bluesky_post` | Create a new post |
+| `bluesky_search` | Search posts |
+| `bluesky_show_profile` | Show a user profile |
+| `bluesky_search_actors` | Search for users |
+| `bluesky_thread` | Show a post thread |
+| `bluesky_notification` | Show notifications |
+| `bluesky_like` | Like a post |
+| `bluesky_repost` | Repost a post |
+| `bluesky_follow` | Follow a user |
+
+Example configuration for Claude Code (`~/.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "bsky": {
+      "command": "bsky",
+      "args": ["mcp"]
+    }
+  }
+}
 ```
 
 ### To enable Autocomplete
