@@ -60,7 +60,7 @@ func doSearch(cCtx *cli.Context) error {
 
 	if cCtx.Bool("json") {
 		for _, p := range results {
-			json.NewEncoder(os.Stdout).Encode(p)
+			checkError(json.NewEncoder(os.Stdout).Encode(p), "Could not encode search results properly")
 		}
 	} else {
 		for _, p := range results {
