@@ -683,6 +683,21 @@ func doReposts(cCtx *cli.Context) error {
 	return nil
 }
 
+func streamHost(host, cursor string) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+	u.Scheme = "wss"
+	u.Path = "/xrpc/com.atproto.sync.subscribeRepos"
+	if cursor != "" {
+		q := u.Query()
+		q.Set("cursor", cursor)
+		u.RawQuery = q.Encode()
+	}
+	return u.String(), nil
+}
+
 func doStream(cCtx *cli.Context) error {
 	var host string
 	if cCtx.Args().Present() {
@@ -693,17 +708,11 @@ func doStream(cCtx *cli.Context) error {
 		if host == "" {
 			host = cfg.Host
 		}
-		u, err := url.Parse(host)
+		var err error
+		host, err = streamHost(host, cCtx.String("cursor"))
 		if err != nil {
 			return err
 		}
-		u.Scheme = "wss"
-		u.Path = "/xrpc/com.atproto.sync.subscribeRepos"
-		cur := cCtx.String("cursor")
-		if cur != "" {
-			u.Query().Add("cursor", cur)
-		}
-		host = u.String()
 	}
 	pattern := cCtx.String("pattern")
 	reply := cCtx.String("reply")
