@@ -241,6 +241,9 @@ func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
 			},
 		}
 	} else {
+		if post.Embed == nil {
+			post.Embed = &bsky.FeedPost_Embed{}
+		}
 		post.Embed.EmbedExternal = &bsky.EmbedExternal{
 			External: &bsky.EmbedExternal_External{
 				Uri: link,
