@@ -85,7 +85,7 @@ func doConvos(cCtx *cli.Context) error {
 
 	var cursor string
 	for {
-		resp, err := chat.ConvoListConvos(context.TODO(), xrpcc, cursor, 50, "", "")
+		resp, err := chat.ConvoListConvos(context.TODO(), xrpcc, cursor, "", 50, "", "", "")
 		if err != nil {
 			return fmt.Errorf("cannot list conversations: %w", err)
 		}
