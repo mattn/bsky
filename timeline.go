@@ -327,7 +327,7 @@ func doPost(cCtx *cli.Context) error {
 	if quoteTo != "" {
 		parts := strings.Split(quoteTo, "/")
 		if len(parts) < 3 {
-			return fmt.Errorf("invalid post uri: %q", replyTo)
+			return fmt.Errorf("invalid post uri: %q", quoteTo)
 		}
 		rkey := parts[len(parts)-1]
 		collection := parts[len(parts)-2]
