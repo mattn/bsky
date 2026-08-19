@@ -256,12 +256,15 @@ func addLink(xrpcc *xrpc.Client, post *bsky.FeedPost, link string) {
 			defer resp.Body.Close()
 			b, err := io.ReadAll(resp.Body)
 			if err == nil {
-				resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+				b, mimeType, err := compressImage(b)
 				if err == nil {
-					post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
-						Ref:      resp.Blob.Ref,
-						MimeType: http.DetectContentType(b),
-						Size:     resp.Blob.Size,
+					resp, err := comatproto.RepoUploadBlob(context.TODO(), xrpcc, bytes.NewReader(b))
+					if err == nil {
+						post.Embed.EmbedExternal.External.Thumb = &lexutil.LexBlob{
+							Ref:      resp.Blob.Ref,
+							MimeType: mimeType,
+							Size:     resp.Blob.Size,
+						}
 					}
 				}
 			}
