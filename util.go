@@ -2,10 +2,16 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	_ "image/gif"
+	"image/jpeg"
+	_ "image/png"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +19,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	xdraw "golang.org/x/image/draw"
+	_ "golang.org/x/image/webp"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
 	"github.com/bluesky-social/indigo/api/bsky"
@@ -87,6 +96,39 @@ func printPost(p *bsky.FeedDefs_PostView) {
 	fmt.Println(p.Uri)
 	color.Set(color.Reset)
 	fmt.Println()
+}
+
+// maxBlobSize is the maximum size of a blob embedded in a post record.
+const maxBlobSize = 1000000
+
+// compressImage returns b unchanged when it fits in maxBlobSize. Otherwise
+// it re-encodes the image as JPEG, scaling it down until it fits.
+func compressImage(b []byte) ([]byte, string, error) {
+	if len(b) <= maxBlobSize {
+		return b, http.DetectContentType(b), nil
+	}
+	img, _, err := image.Decode(bytes.NewReader(b))
+	if err != nil {
+		return nil, "", err
+	}
+	for range 10 {
+		var buf bytes.Buffer
+		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}); err != nil {
+			return nil, "", err
+		}
+		if buf.Len() <= maxBlobSize {
+			return buf.Bytes(), "image/jpeg", nil
+		}
+		bounds := img.Bounds()
+		w, h := bounds.Dx()*3/4, bounds.Dy()*3/4
+		if w < 1 || h < 1 {
+			break
+		}
+		dst := image.NewRGBA(image.Rect(0, 0, w, h))
+		xdraw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, bounds, xdraw.Src, nil)
+		img = dst
+	}
+	return nil, "", fmt.Errorf("image is too large")
 }
 
 var formats = []string{
